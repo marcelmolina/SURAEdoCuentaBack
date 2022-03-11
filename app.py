@@ -224,48 +224,41 @@ def bono_agente_pdf():
 			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
 			try:
 				has_agent = False
-				statement = connection.cursor()
-				c_head = connection.cursor()
-				statement.execute(
-					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
-					c_head=c_head, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
-				libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.pdf'
+				cursors = []
+				for times in range(2):
+					cursor = connection.cursor()
+					query = getquery('A', 'BONO', times, P_Clave, P_Feini, P_Fefin)
+					cursor.execute(query)
+					cursors.append(cursor)
 
 				virtual_wb = BytesIO()
 				doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((432*mm, 546*mm)))
 				flowables = []
+				libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.pdf'
 
-
-				data_header = []
-				for row in c_head:
+				for row in cursors[0]:
 					has_agent = True
 					lista_aux = []
 					for i in range(0, len(row)):
 						lista_aux.append(row[i])
+				cursors[0].close
 				if not has_agent:
-					statement.close()
-					c_head.close()
 					return make_response(jsonify(succes=False, message="Codigo de agente no encontrado"), 400)
 				header_all = [("   ","   ","ESTADO DE CUENTA DE BONOS","   ","   "),
 							  ("Nombre del SAT para Sura:", "Seguros SURA S.A. de C.V","     ","Nombre del Agente:",lista_aux[0]),
 							  ("RFC de Sura:", "R.F.C R&S-811221KR6","   ","Clave del Agente:",lista_aux[1]),
 							  ("Domicilio Sura:", "Blvd. Adolfo López Mateos No. 2448","   ","RFC del Agente:",lista_aux[2]),
 							  ("Col. Altavista C.P. 01060 Ciudad de México.", "Tel 5723-7999","   ","Domicilio del Agente:",lista_aux[3]),
-							  ("Periodo de corte:",lista_aux[8],"   ","Tipo de productor:",lista_aux[4]),
+							  ("Fecha de generación:",lista_aux[8],"   ","Tipo de productor:",lista_aux[4]),
 							  ("Desde:",lista_aux[9],"   ","Promotoría a la que pertenece:",lista_aux[5]),
 							  ("Hasta:",lista_aux[10],"   ","Clave de productor:",lista_aux[6]),
 							  ("Fecha de Preliquidación:",lista_aux[11],"   ","Cuenta bancaria dada de alta:",lista_aux[7]),
 							  ("   ","   ","   ","   ","   ")]
-				grid = [('FONTNAME', (0, 0), (0, -1), 'Courier-Bold'),
-						('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
+				grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
 				tbl = Table(header_all)
 				tbl.setStyle(grid)
 				flowables.append(tbl)
-				c_head.close()
-				c_body = connection.cursor()
-				statement.execute(
-					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
-					c_body=c_body, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
+
 				j = 0
 				lista = getHeadColumns("pdf")
 				data_body = []
@@ -274,7 +267,7 @@ def bono_agente_pdf():
 				for item in lista:
 					lista_aux.append(item)
 				data_body.append(lista_aux)
-				for row in c_body:
+				for row in cursors[1]:
 					has_data=True
 					lista_aux = []
 					for i in range(0, len(row)):
@@ -284,23 +277,17 @@ def bono_agente_pdf():
 							else:
 								lista_aux.append(row[i])
 					data_body.append(lista_aux)
+				cursors[1].close()
 				if not has_data:
-					statement.close()
-					c_body.close()
 					return make_response(jsonify(succes=False, message="Codigo de agente no retorna data en esas fechas"), 400)
 				tbl = Table(data_body)
 				tblstyle = TableStyle([('GRID',(0,0),(0,0),0.25,colors.gray),('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),('FONTSIZE', (0, 0), (0, 0), 7)])
 				tbl.setStyle(tblstyle)
 				flowables.append(tbl)
-
-				statement.close()
-				c_body.close()
 				doc.build(flowables)
 
 			except Exception as ex:
 				app.logger.error(ex)
-				statement.close()
-				c_head.close()
 		except Exception as ex:
 			app.logger.error(ex)
 		print("\nTermina Proceso " + time.strftime("%X"))
@@ -384,13 +371,12 @@ def comisiones_agente_pdf():
 							  ("RFC de Sura:", "R.F.C R&S-811221KR6","   ","Clave del Agente:",lista_aux[1]),
 							  ("Domicilio Sura:", "Blvd. Adolfo López Mateos No. 2448","   ","RFC del Agente:",lista_aux[2]),
 							  ("Col. Altavista C.P. 01060 Ciudad de México.", "Tel 5723-7999","   ","Domicilio del Agente:",lista_aux[3]),
-							  ("Periodo de corte:",lista_aux[8],"   ","Tipo de productor:",lista_aux[4]),
+							  ("Fecha de generación:",lista_aux[8],"   ","Tipo de productor:",lista_aux[4]),
 							  ("Desde:",lista_aux[9],"   ","Promotoría a la que pertenece:",lista_aux[5]),
 							  ("Hasta:",lista_aux[10],"   ","Clave de productor:",lista_aux[6]),
 							  ("Fecha de Preliquidación:",lista_aux[11],"   ","Cuenta bancaria dada de alta:",lista_aux[7]),
 							  ("   ","   ","   ","   ","   ")]
-				grid = [('FONTNAME', (0, 0), (0, -1), 'Courier-Bold'),
-						('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
+				grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
 				tbl = Table(header_all)
 				tbl.setStyle(grid)
 				flowables.append(tbl)
@@ -779,13 +765,12 @@ def bono_promotores_pdf():
 							  ("RFC de Sura:", "R.F.C R&S-811221KR6","   ","Clave del Promotor:",lista_aux[1]),
 							  ("Domicilio Sura:", "Blvd. Adolfo López Mateos No. 2448","   ","RFC del Promotor:",lista_aux[2]),
 							  ("Col. Altavista C.P. 01060 Ciudad de México.", "Tel 5723-7999","   ","Domicilio del Promotor:",lista_aux[3]),
-							  ("Periodo de corte:",lista_aux[8],"   ","Tipo de productor:",lista_aux[4]),
+							  ("Fecha de generación:",lista_aux[8],"   ","Tipo de productor:",lista_aux[4]),
 							  ("Desde:",lista_aux[9],"   ","Promotoría a la que pertenece:",lista_aux[5]),
 							  ("Hasta:",lista_aux[10],"   ","Clave de productor:",lista_aux[6]),
 							  ("Fecha de Preliquidación:",lista_aux[11],"   ","Número exterior:",lista_aux[7]),
 							  ("   ","   ","   ","   ","   ")]
-				grid = [('FONTNAME', (0, 0), (0, -1), 'Courier-Bold'),
-						('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
+				grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
 				tbl = Table(header_all)
 				tbl.setStyle(grid)
 				flowables.append(tbl)
@@ -904,13 +889,12 @@ def comisiones_promotores_pdf():
 							  ("RFC de Sura:", "R.F.C R&S-811221KR6","   ","Clave del Promotor:",lista_aux[1]),
 							  ("Domicilio Sura:", "Blvd. Adolfo López Mateos No. 2448","   ","RFC del Agente:",lista_aux[2]),
 							  ("Col. Altavista C.P. 01060 Ciudad de México.", "Tel 5723-7999","   ","Domicilio del Promotor:",lista_aux[3]),
-							  ("Periodo de corte:",lista_aux[8],"   ","Tipo de productor:",lista_aux[4]),
+							  ("Fecha de generación:",lista_aux[8],"   ","Tipo de productor:",lista_aux[4]),
 							  ("Desde:",lista_aux[9],"   ","Promotoría a la que pertenece:",lista_aux[5]),
 							  ("Hasta:",lista_aux[10],"   ","Clave de productor:",lista_aux[6]),
 							  ("Fecha de Preliquidación:",lista_aux[11],"   ","Número exterior:",lista_aux[7]),
 							  ("   ","   ","   ","   ","   ")]
-				grid = [('FONTNAME', (0, 0), (0, -1), 'Courier-Bold'),
-						('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
+				grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
 				tbl = Table(header_all)
 				tbl.setStyle(grid)
 				flowables.append(tbl)
@@ -1289,9 +1273,18 @@ def getquery(clave,tipo,tabla,codigo,desde,hasta):
 	if clave == 'P':
 		if tipo == 'BONO':
 			if tabla == 0:
-				query = ""
+				query = f"SELECT DISTINCT d.dsnombre Nombre, a.cdpromot Clave, d.cdideper RFC, e.dsdomici DIRECCION, 'Promotor' Tipo_Productor, a.cdpromot||' - '||c.dspromot PROMOTORIA, a.cdpromot Clave_Agente, e.nmnumero NUMERO_EXTERIOR, TO_CHAR(SYSDATE,'DD/MM/YYYY') PERIODO_CORTE, '{desde}' FEINICIO, '{hasta}' FEFIN, TO_CHAR((SELECT Min(feenvio) FROM tsia_movprom A ,BON_TPAGLIQ B WHERE B.NUMPRELIQ =A.NUMPRELIQ AND b.FEENVIO BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdpromot= P_PROMOTOR AND B.CDAGPROU = A.cdpromot AND B.CDCVEMOV = A.CDCVEMOV AND B.CDCONC = A.CDCONC ),'DD/MM/YYYY') FECHA_PRELIQ FROM tsia_movprom a, tsia_promotor c, mpersona d, mdomicil e WHERE TRUNC(a.femovimi) BETWEEN TO_DATE('{desde}','DD/MM/YYYY') AND TO_DATE('{hasta}','DD/MM/YYYY') AND a.cdpromot = '{codigo}' AND a.cdpromot = c.cdpromot AND c.cdperson = d.cdperson AND d.cdperson = e.cdperson AND e.nmorddom = 1 AND a.ptimport <> 0"
 			if tabla == 1:
-				query = ""
+				query = f"SELECT MAIN.NMBONO,MAIN.DSBONO,MAIN.CDTIPBON, MAIN.CDGRUPO,MAIN.CDUNIECO, MAIN.CDRAMO,MAIN.NMPOLIZA, nomtomador(MAIN.CDUNIECO, MAIN.CDRAMO, 'M', MAIN.NMPOLIZA, 9999999999999999999) CONTRATANTE, MAIN.cdagente,(SELECT OTVALOR07 FROM TVALOPOL Z WHERE Z.CDUNIECO=MAIN.CDUNIECO AND Z.CDRAMO=MAIN.CDRAMO AND Z.NMPOLIZA=MAIN.NMPOLIZA AND Z.ESTADO='M' AND Z.NMSUPLEM=(SELECT MAX(NMSUPLEM) FROM TVALOPOL Y WHERE Y.CDUNIECO=Z.CDUNIECO AND Z.CDRAMO=Y.CDRAMO AND Z.NMPOLIZA=Y.NMPOLIZA AND Z.ESTADO=Y.ESTADO)) COMPUTABILIDAD, MAIN.TIPOCAMB, MAIN.NMRECIBO,MAIN.SERIERECIBO,NVL(MAIN.PMATOTAL,0) PRIMA_TOTAL,NVL(MAIN.PMANETAP,0) PRIMA_NETA,MAIN.PORCEPAG, ABS(MAIN.imporpron),(ABS(MAIN.imporpron)+ABS(MAIN.imporproi)) TOTAL_PAGADO ,MAIN.NUMPRELIQ, DECODE(NVL(MAIN.CDCOMPRO,0),0,'',DECODE(MAIN.CDMETPAG,'EFT',MAIN.NMTRANSF,'CHK',MAIN.NMCHEQUE,MAIN.CDCOMPRO)) NUM_COMPROBANTE, TO_CHAR(MAIN.FEMOVIMI,'DD/MM/YYYY') FECHA, (DECODE ((SELECT DISTINCT 'SI' " \
+						f"FROM bon_trecexc WHERE nmbono = MAIN.nmbono AND cdrecpag = MAIN.cdrecpag AND cdagente = MAIN.cdagente AND cdtipmov = MAIN.cdtipmov),'SI', 'SI', 'NO' )) EXCLUDO, (SELECT DECODE(swexcep, '1', 'Por agente para Rank', '2', 'Por agente para Pago', '3', 'Por agente para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 1) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_AGENTE, (SELECT DECODE(swexcep, '1', 'Por promotor para Rank', '2', 'Por promotor para Pago', '3', 'Por promotor para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 2) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov " \
+						f"AND ROWNUM < 2) POR_PROMOTOR, (SELECT DECODE(swexcep, '1', 'Por ramo para Rank', '2', 'Por ramo para Pago', '3', 'Por ramo para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 4) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_RAMO, (SELECT DECODE(swexcep, '1', 'Por oficina para Rank', '2', 'Por oficina para Pago', '3', 'Por oficina para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 5) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov) POR_OFICINA, (SELECT DECODE(swexcep,'1', 'Por poliza para Rank', '2', 'Por poliza para Pago', '3', 'Por poliza para Todo') FROM bon_trecexc aa, (SELECT codigo, " \
+						f"descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 6) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_POLIZA, (SELECT DECODE(swexcep, '1', 'Por grupo para Rank', '2', 'Por grupo para Pago', '3', 'Por grupo para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 7) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_GRUPO, (SELECT DECODE(swexcep, '1', 'Por subgrupo para Rank', '2', 'Por subgrupo para Pago', '3', 'Por subgrupo para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 8) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND " \
+						f"aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov) POR_SUBGRUPO, (SELECT DECODE(swexcep, '1', 'Por tipo de persona para Rank', '2', 'Por tipo de persona para Pago', '3', 'Por tipo de persona para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 9) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_TIP_PERS, (SELECT DECODE(swexcep, '1', 'Por Reaseguro para Rank', '2', 'Por Reaseguro para Pago', '3', 'Por Reaseguro para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 10) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_REASEGURO, (SELECT DECODE(swexcep, '1', 'Por Coaseguro para Rank', '2', " \
+						f"'Por Coaseguro para Pago', '3', 'Por Coaseguro para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 11) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_COASEGURO, (SELECT DECODE(swexcep, '1', 'Por multianual para Rank', '2', 'Por multianual para Pago', '3', 'Por multianual para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 12) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_MULTIANUAL, (SELECT DECODE(swexcep, '1', 'Por dividendos para Rank', '2', 'Por dividendos para Pago', '3', 'Por dividendos para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' " \
+						f"AND codigo = 13) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_DIVIDENDOS, (SELECT DECODE(swexcep, '1', 'Por no computable para Rank', '2', 'Por no computable para Pago', '3', 'Por no computable para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 14) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_NO_COMPU, (SELECT DECODE(swexcep, '1', 'Por portafolio para Rank', '2', 'Por portafolio para Pago', '3', 'Por portafolio para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 15) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente " \
+						f"AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_PORTAFOLIO, (SELECT DECODE(swexcep, '1', 'Por prestador para Rank', '2', 'Por prestador para Pago', '3', 'Por prestador para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 17) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_PRESTADOR, (SELECT DECODE(swexcep, '1', 'Por negocio para Rank', '2', 'Por negocio para Pago', '3', 'Por negocio para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 18) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_NEGOCIO FROM (SELECT E.TIPOCAMB, C.NMBONO,D.DSBONO,C.CDTIPBON, E.CDGRUPO,E.CDUNIECO, E.CDRAMO,E.NMPOLIZA,F.CDAGENTE," \
+						f"E.NMRECIBO,F.SERIERECIBO,G.NMTRANSF,G.CDMETPAG,G.NMCHEQUE,G.CDCOMPRO, F.PMATOTAL,F.PMANETAP,C.PORCEPAG,F.imporpron,F.imporproi,A.NUMPRELIQ,A.FEMOVIMI,E.CDTIPMOV,E.CDRECPAG FROM TSIA_MOVPROM A , BON_TPAGLIQ B, BON_TCONFBON C, BON_TCATBONO D, VBON_DESGLOSE E, tsia_detcom F, MINTPSOFT G WHERE A.cdpromot ='{codigo}' AND A.FEMOVIMI BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND A.CDCONC IN ('B','BC') AND B.NUMPRELIQ =A.NUMPRELIQ AND B.CDAGPROU = A.cdpromot AND B.CDCVEMOV = A.CDCVEMOV AND B.CDCONC = A.CDCONC AND C.NMBONO = B.NMBONO AND D.CDBONO = C.CDBONO AND E.NMBONO= C.NMBONO AND A.cdpromot= E.cdpromot AND E.NMPOLIZA= F.NMPOLIZA AND E.CDUNIECO= F.CDUNIECO AND E.CDRAMO= F.CDRAMO AND E.NMRECIBO= F.NMRECIBO AND A.cdpromot= F.cdpromot AND B.NUMPRELIQ =G.NUMPRELI (+) AND A.CDCVEMOV = B.CDCVEMOV(+) AND A.CDCONC = B.CDCONC (+) GROUP BY E.TIPOCAMB,C.NMBONO,D.DSBONO, E.CDGRUPO, E.CDUNIECO, E.CDRAMO,E.NMPOLIZA,F.CDAGENTE, F.SERIERECIBO,G.NMTRANSF,C.CDTIPBON, " \
+						f"F.PMATOTAL,F.PMANETAP,G.CDMETPAG,G.NMCHEQUE,G.CDCOMPRO, C.PORCEPAG,F.imporpron, F.imporproi,E.CDTIPMOV,E.CDRECPAG, A.NUMPRELIQ,E.NMRECIBO,A.FEMOVIMI ORDER BY FEMOVIMI ASC) MAIN"
 		if tipo == 'COMISION':
 			if tabla == 0:
 				query = ""
