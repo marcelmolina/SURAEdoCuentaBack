@@ -26,6 +26,7 @@ DB_USER = os.getenv('DB_USER')
 DB_PWD = os.getenv('DB_PWD')
 DB_SCHEMA = os.getenv('DB_SCHEMA')
 
+
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 context_path = "/api/estados-cuenta/"
@@ -33,7 +34,46 @@ context_path = "/api/estados-cuenta/"
 # Testing Route
 @app.route(context_path+'/ping', methods=['GET'])
 def ping():
+
     return jsonify({'response': 'pong!'})
+
+
+@app.route(context_path+'/periodo', methods=['GET'])
+def periodo():
+	P_MES = request.args['mes']
+	P_ANIO = request.args['anio']
+	P_CLAVE = request.args['clave']
+	host = DB_HOST
+	port = DB_PORT
+	service_name = DB_SERVICE
+	user = DB_USER
+	password = DB_PWD
+	schema = DB_SCHEMA
+	sid = cx_Oracle.makedsn(host, port, service_name=service_name)
+	# Declaracion de cursores a utilizar
+	try:
+		connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
+		try:
+			statement = connection.cursor()
+			cur1 = connection.cursor()
+			cur2 = connection.cursor()
+			v_desde = cur1.var(cx_Oracle.Date)
+			v_hasta = cur2.var(cx_Oracle.Date)
+			statement.execute(
+				"begin " + schema + ".PKG_MUI_ESTADOS_DE_CUENTA_1.P_DESDEHASTA( :Pb_CLAVE, :Pb_MES, :Pb_ANIO, :desde,:hasta); end;",
+				desde=v_desde,hasta=v_hasta, Pb_CLAVE=str(P_CLAVE), Pb_MES=P_MES, Pb_ANIO=P_ANIO)
+			if not v_desde:
+				return make_response(jsonify(succes=False, message="Error en la busqueda de fechas."), 400)
+			P_Feini = str(v_desde.values[0])
+			P_Fefin = str(v_hasta.values[0])
+			return make_response(jsonify(succes=True, desde=P_Feini, hasta=P_Fefin), 200)
+		except Exception as ex:
+			app.logger.error(ex)
+			statement.close()
+			return make_response(jsonify(succes=False, message="Error en la busqueda de fechas."), 400)
+	except Exception as ex:
+		app.logger.error(ex)
+		return make_response(jsonify(succes=False, message="Error en la busqueda de fechas."), 400)
 
 
 @app.route(context_path + '/agentes/bonos/excel', methods=['GET'])
@@ -151,12 +191,8 @@ def bono_agente_xlsx():
 					return make_response(jsonify(succes=False, message="Codigo de agente no retorna data en esas fechas"), 400)
 			except Exception as ex:
 				app.logger.error(ex)
-				statement.close()
-				c_head.close()
 		except Exception as ex:
 			app.logger.error(ex)
-			statement.close()
-			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
 
 		virtual_wb = BytesIO()
@@ -273,8 +309,6 @@ def bono_agente_pdf():
 				c_head.close()
 		except Exception as ex:
 			app.logger.error(ex)
-			statement.close()
-			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
 
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
@@ -414,17 +448,6 @@ def comisiones_agente_pdf():
 				c9.close()
 		except Exception as ex:
 			app.logger.error(ex)
-			statement.close()
-			c_head.close()
-			c1.close()
-			c2.close()
-			c3.close()
-			c4.close()
-			c5.close()
-			c6.close()
-			c7.close()
-			c8.close()
-			c9.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
 
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
@@ -569,17 +592,6 @@ def comisiones_agente_xlsx():
 				c9.close()
 		except Exception as ex:
 			app.logger.error(ex)
-			statement.close()
-			c_head.close()
-			c1.close()
-			c2.close()
-			c3.close()
-			c4.close()
-			c5.close()
-			c6.close()
-			c7.close()
-			c8.close()
-			c9.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
 
 		virtual_wb = BytesIO()
@@ -709,8 +721,6 @@ def bono_promotores_xlsx():
 				c_head.close()
 		except Exception as ex:
 			app.logger.error(ex)
-			statement.close()
-			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
 
 		virtual_wb = BytesIO()
@@ -827,8 +837,6 @@ def bono_promotores_pdf():
 				c_head.close()
 		except Exception as ex:
 			app.logger.error(ex)
-			statement.close()
-			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
 
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
@@ -968,17 +976,6 @@ def comisiones_promotores_pdf():
 				c9.close()
 		except Exception as ex:
 			app.logger.error(ex)
-			statement.close()
-			c_head.close()
-			c1.close()
-			c2.close()
-			c3.close()
-			c4.close()
-			c5.close()
-			c6.close()
-			c7.close()
-			c8.close()
-			c9.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
 
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
@@ -1123,17 +1120,6 @@ def comisiones_promotor_xlsx():
 				c9.close()
 		except Exception as ex:
 			app.logger.error(ex)
-			statement.close()
-			c_head.close()
-			c1.close()
-			c2.close()
-			c3.close()
-			c4.close()
-			c5.close()
-			c6.close()
-			c7.close()
-			c8.close()
-			c9.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
 
 		virtual_wb = BytesIO()
