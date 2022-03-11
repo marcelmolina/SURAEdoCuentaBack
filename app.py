@@ -300,7 +300,16 @@ def comisiones_agente_pdf():
 					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
 					c_head=c_head,c1=c1,c2=c2,c3=c3,c4=c4,c5=c5,c6=c6,c7=c7,c8=c8,c9=c9, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.pdf'
-
+				cursores = []
+				cursores.append(c1)
+				cursores.append(c2)
+				cursores.append(c3)
+				cursores.append(c4)
+				cursores.append(c5)
+				cursores.append(c6)
+				cursores.append(c7)
+				cursores.append(c8)
+				cursores.append(c9)
 				virtual_wb = BytesIO()
 				doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((432*mm, 546*mm)))
 				flowables = []
@@ -342,171 +351,31 @@ def comisiones_agente_pdf():
 				tblstyle = TableStyle(
 					[('GRID', (0, 0), (0, 0), 0.25, colors.gray), ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
 					 ('FONTSIZE', (0, 0), (0, 0), 7)])
-
-				lista = getHeadColumnsComisones("pdf",1)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("","TOTAL DE PERCEPCIONES MENSUALES",""),("","","")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c1:
+				c_count=1
+				for cursor in cursores:
+					lista = getHeadColumnsComisones("pdf", c_count)
+					data_cursor = []
 					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-
-				#fin de bloque
-				lista = getHeadColumnsComisones("pdf", 2)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "TOTAL DE PERCEPCIONES ACUMULADO ANUAL", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c2:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 3)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "DAÑOS MONEDA MXP", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c3:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 4)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "DAÑOS MONEDA USD", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c4:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 5)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "DETALLE", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c5:
-					lista_aux = []
-					for i in range(0, len(row)):
-						if i not in [1, 6, 17]:
-							lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 6)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "VIDA MONEDA MXP", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c6:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 7)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "VIDA MONEDA USD", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c7:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 8)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "RESUMEN DE DEPOSITOS EN MXP", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c8:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 9)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "RESUMEN DE DEPOSITOS EN USD", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c9:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				# fin de bloque
+					taux = Table([("", getTableNamesComisiones(c_count), ""), ("", "", "")])
+					taux.setStyle(grid)
+					flowables.append(taux)
+					data_cursor.append(lista)
+					for row in cursor:
+						lista_aux = []
+						for i in range(0, len(row)):
+							if c_count == 5:
+								if i not in [1, 6, 17]:
+									lista_aux.append(row[i])
+							else:
+								lista_aux.append(row[i])
+						data_cursor.append(lista_aux)
+					tbl = Table(data_cursor)
+					tbl.setStyle(tblstyle)
+					flowables.append(tbl)
+					flowables.append(Table([("", " ", ""), ("", "", "")]))
+					c_count += 1
+					cursor.close()
 				statement.close()
-				c1.close()
-				c2.close()
-				c3.close()
-				c4.close()
-				c5.close()
-				c6.close()
-				c7.close()
-				c8.close()
-				c9.close()
 
 				doc.build(flowables)
 
@@ -545,7 +414,7 @@ def comisiones_agente_pdf():
 @app.route(context_path + '/agentes/comisiones/excel', methods=['GET'])
 def comisiones_agente_xlsx():
 	try:
-		print("EStado de cuentas de Comisiones")
+		print("Estado de cuentas de Comisiones")
 
 		P_Clave = request.args['codigo']
 		P_Feini = request.args['desde']
@@ -606,400 +475,59 @@ def comisiones_agente_xlsx():
 				c_head.close()
 				f = 13 #principal gestor de filas del archivo
 				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
-				#bloque inicia
-				lista = getHeadColumnsComisones("excel",1)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				#titulo de la tabla
-				ws.cell(row=f, column=1).value = "TOTAL DE PERCEPCIONES MENSUALES"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				#cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c1:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center",vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
+				#NUEVO BLOQUE SECUENCIAL
+				cursores = []
+				cursores.append(c1)
+				cursores.append(c2)
+				cursores.append(c3)
+				cursores.append(c4)
+				cursores.append(c5)
+				cursores.append(c6)
+				cursores.append(c7)
+				cursores.append(c8)
+				cursores.append(c9)
+				c_count = 1
+				for cursor in cursores:
+					lista = getHeadColumnsComisones("excel", c_count)
+					alphabet_string = string.ascii_uppercase
+					alphabet_list = list(alphabet_string)
+					ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count)
+					ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
 					f += 1
-				c1.close()
-				#fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 2)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "TOTAL DE PERCEPCIONES ACUMULADO ANUAL"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c2:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
+					j = 0
+					for item in lista:
+						ws.cell(row=f, column=j + 1).value = item
+						ws.cell(row=f, column=j + 1).fill = greyFill
+						ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
+						ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
+						columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
+						multiplicador = 2
+						lista_columnas_esp = ['A','B','C', 'H']
+						ancho = len(item)
+						if len(item) <= 6:
+							ancho *= 2
+						if len(item) > 6 or columna == 'A':
+							ancho *= 1.1
+						if columna in lista_columnas_esp:
+							ancho = 25
+						if c_count == 5:
+							ws.column_dimensions[columna].width = ancho
+						j += 1
+					j = 0
+					k = 0
 					f += 1
-				c2.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 3)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "DAÑOS MONEDA MXP"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					#ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c3:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c3.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 4)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "DAÑOS MONEDA USD"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					#ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c4:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c4.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 5)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "DETALLES"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c5:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c5.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 6)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "VIDA MONEDA MXP"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					#ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c6:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c6.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 7)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "VIDA MONEDA USD"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					#ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c7:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c7.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 8)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "RESUMEN DE DEPOSITOS EN MXP"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c8:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c8.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 9)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "RESUMEN DE DEPOSITOS EN USD"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c9:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c9.close()
+					for row in cursor:
+						for i in range(0, len(row)):
+							valor = row[i]
+							ws.cell(row=f, column=i + 1).value = valor
+							ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
+							if len(str(valor)) > 17:
+								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
+								if len(str(valor)) > 25:
+									ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
+						f += 1
+					cursor.close()
+					c_count += 1
 				statement.close()
 			# fin de bloque
 			except Exception as ex:
@@ -1349,175 +877,43 @@ def comisiones_promotores_pdf():
 				tbl.setStyle(grid)
 				flowables.append(tbl)
 				c_head.close()
-				#se termino de generar el cabecero, ahor los cursores de detalle
+				c_count = 1
+				cursores = []
+				cursores.append(c1)
+				cursores.append(c2)
+				cursores.append(c3)
+				cursores.append(c4)
+				cursores.append(c5)
+				cursores.append(c6)
+				cursores.append(c7)
+				cursores.append(c8)
+				cursores.append(c9)
+
 				tblstyle = TableStyle(
 					[('GRID', (0, 0), (0, 0), 0.25, colors.gray), ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
 					 ('FONTSIZE', (0, 0), (0, 0), 7)])
-
-				lista = getHeadColumnsComisones("pdf",1)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("","TOTAL DE PERCEPCIONES MENSUALES",""),("","","")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c1:
+				for cursor in cursores:
+					lista = getHeadColumnsComisones("pdf", c_count)
+					data_cursor = []
 					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-
-				#fin de bloque
-				lista = getHeadColumnsComisones("pdf", 2)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "TOTAL DE PERCEPCIONES ACUMULADO ANUAL", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c2:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 3)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "DAÑOS MONEDA MXP", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c3:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 4)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "DAÑOS MONEDA USD", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c4:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 5)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "DETALLE", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c5:
-					lista_aux = []
-					for i in range(0, len(row)):
-						if i not in [1, 6, 17]:
+					taux = Table([("", getTableNamesComisiones(c_count), ""), ("", "", "")])
+					taux.setStyle(grid)
+					flowables.append(taux)
+					data_cursor.append(lista)
+					for row in cursor:
+						lista_aux = []
+						for i in range(0, len(row)):
 							lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 6)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "VIDA MONEDA MXP", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c6:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 7)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "VIDA MONEDA USD", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c7:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 8)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "RESUMEN DE DEPOSITOS EN MXP", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c8:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
-				flowables.append(Table([("", " ", ""),("","","")]))
-				# fin de bloque
-				lista = getHeadColumnsComisones("pdf", 9)
-				data_cursor = []
-				lista_aux = []
-				taux = Table([("", "RESUMEN DE DEPOSITOS EN USD", ""), ("", "", "")])
-				taux.setStyle(grid)
-				flowables.append(taux)
-				data_cursor.append(lista)
-				for row in c9:
-					lista_aux = []
-					for i in range(0, len(row)):
-						lista_aux.append(row[i])
-					data_cursor.append(lista_aux)
-				tbl = Table(data_cursor)
-				tbl.setStyle(tblstyle)
-				flowables.append(tbl)
+						data_cursor.append(lista_aux)
+					tbl = Table(data_cursor)
+					tbl.setStyle(tblstyle)
+					flowables.append(tbl)
+					flowables.append(Table([("", " ", ""), ("", "", "")]))
+					c_count += 1
+					cursor.close()
+
 				# fin de bloque
 				statement.close()
-				c1.close()
-				c2.close()
-				c3.close()
-				c4.close()
-				c5.close()
-				c6.close()
-				c7.close()
-				c8.close()
-				c9.close()
 
 				doc.build(flowables)
 
@@ -1616,400 +1012,60 @@ def comisiones_promotor_xlsx():
 				c_head.close()
 				f = 13 #principal gestor de filas del archivo
 				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
-				#bloque inicia
-				lista = getHeadColumnsComisones("excel",1)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				#titulo de la tabla
-				ws.cell(row=f, column=1).value = "TOTAL DE PERCEPCIONES MENSUALES"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				#cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c1:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center",vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
+				# NUEVO BLOQUE SECUENCIAL
+				cursores = []
+				cursores.append(c1)
+				cursores.append(c2)
+				cursores.append(c3)
+				cursores.append(c4)
+				cursores.append(c5)
+				cursores.append(c6)
+				cursores.append(c7)
+				cursores.append(c8)
+				cursores.append(c9)
+				c_count = 1
+				for cursor in cursores:
+					lista = getHeadColumnsComisones("excel", c_count)
+					alphabet_string = string.ascii_uppercase
+					alphabet_list = list(alphabet_string)
+					ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count)
+					ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
 					f += 1
-				c1.close()
-				#fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 2)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "TOTAL DE PERCEPCIONES ACUMULADO ANUAL"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c2:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
+					j = 0
+					for item in lista:
+						ws.cell(row=f, column=j + 1).value = item
+						ws.cell(row=f, column=j + 1).fill = greyFill
+						ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
+						ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
+						columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
+						multiplicador = 2
+						lista_columnas_esp = ['A', 'B', 'C', 'H']
+						ancho = len(item)
+						if len(item) <= 6:
+							ancho *= 2
+						if len(item) > 6 or columna == 'A':
+							ancho *= 1.1
+						if columna in lista_columnas_esp:
+							ancho = 25
+						if c_count == 5:
+							ws.column_dimensions[columna].width = ancho
+						j += 1
+					j = 0
+					k = 0
 					f += 1
-				c2.close()
+					for row in cursor:
+						for i in range(0, len(row)):
+							valor = row[i]
+							ws.cell(row=f, column=i + 1).value = valor
+							ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
+							if len(str(valor)) > 17:
+								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
+								if len(str(valor)) > 25:
+									ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
+						f += 1
+					cursor.close()
+					c_count += 1
 				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 3)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "DAÑOS MONEDA MXP"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					#ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c3:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c3.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 4)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "DAÑOS MONEDA USD"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					#ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c4:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c4.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 5)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "DETALLES"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c5:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c5.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 6)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "VIDA MONEDA MXP"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					#ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c6:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c6.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 7)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "VIDA MONEDA USD"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					#ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c7:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c7.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 8)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "RESUMEN DE DEPOSITOS EN MXP"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c8:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c8.close()
-				# fin de bloque
-				# bloque inicia
-				f += 1
-				lista = getHeadColumnsComisones("excel", 9)
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				# titulo de la tabla
-				ws.cell(row=f, column=1).value = "RESUMEN DE DEPOSITOS EN USD"
-				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-				f += 1
-				# cabeceras de la tabla
-				j = 0
-				for item in lista:
-					ws.cell(row=f, column=j + 1).value = item
-					ws.cell(row=f, column=j + 1).fill = greyFill
-					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				f += 1
-				for row in c9:
-					for i in range(0, len(row)):
-						valor = row[i]
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-
-					f += 1
-				c9.close()
 				statement.close()
 			# fin de bloque
 			except Exception as ex:
@@ -2145,6 +1201,30 @@ def getTipoSubBono(id):
 	if id == 82:
 		codigo = "BD"
 	return codigo
+
+
+def getTableNamesComisiones(tabla):
+	nombre=""
+	if tabla == 1:
+		nombre = "TOTAL DE PERCEPCIONES MENSUALES"
+	if tabla == 2:
+		nombre = "TOTAL DE PERCEPCIONES ACUMULADO ANUAL"
+	if tabla == 3:
+		nombre = "DAÑOS MONEDA MXP"
+	if tabla == 4:
+		nombre = "DAÑOS MONEDA USD"
+	if tabla == 5:
+		nombre = "DETALLES"
+	if tabla == 6:
+		nombre = "VIDA MONEDA MXP"
+	if tabla == 7:
+		nombre = "VIDA MONEDA USD"
+	if tabla == 8:
+		nombre = "RESUMEN DE DEPOSITOS EN MXP"
+	if tabla == 9:
+		nombre = "RESUMEN DE DEPOSITOS EN USD"
+	return nombre
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=4000)
