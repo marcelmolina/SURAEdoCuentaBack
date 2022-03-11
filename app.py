@@ -611,29 +611,26 @@ def bono_promotores_xlsx():
 			try:
 				wb = opyxl.load_workbook("plantilla_promotor.xlsx")
 				ws = wb.worksheets[0]
-				statement = connection.cursor()
-				c_head = connection.cursor()
 				has_agent = False
-				statement.execute(
-					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
-					c_head=c_head, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.xlsx'
-				for row in c_head:
+				cursors = []
+				for times in range(2):
+					cursor = connection.cursor()
+					query = getquery('P', 'BONO', times, P_Clave, P_Feini, P_Fefin)
+					cursor.execute(query)
+					cursors.append(cursor)
+
+				for row in cursors[0]:
 					has_agent = True
 					for i in range(0, len(row) - 4):
 						ws.cell(row=4 + i, column=9).value = row[i]
 					for i in range(len(row) - 4, len(row)):
 						ws.cell(row=i, column=4).value = row[i]
 
-				c_body = connection.cursor()
+				cursors[0].close()
 				if not has_agent:
-					statement.close()
-					c_head.close()
 					return make_response(jsonify(succes=False, message="Codigo de promotor no encontrado"), 400)
-				c_head.close()
-				statement.execute(
-					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
-					c_body=c_body, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
+
 				j = 0
 				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
 				lista = getHeadColumns("excel")
@@ -659,7 +656,7 @@ def bono_promotores_xlsx():
 				j = 0
 				k = 0
 				has_data = False
-				for row in c_body:
+				for row in cursors[1]:
 					has_data = True
 					lista_razones = []
 					for i in range(0, len(row)):
@@ -689,16 +686,11 @@ def bono_promotores_xlsx():
 					if row[21] == 'SI' and len(lista_razones) > 0:
 						ws.cell(row=14 + j, column=11).value = ", ".join(lista_razones)
 					j += 1
-				statement.close()
-				c_body.close()
+				cursors[1].close()
 				if not has_data:
-					statement.close()
-					c_body.close()
 					return make_response(jsonify(succes=False, message="Codigo de promotor no retorna data en esas fechas"), 400)
 			except Exception as ex:
 				app.logger.error(ex)
-				statement.close()
-				c_head.close()
 		except Exception as ex:
 			app.logger.error(ex)
 		print("\nTermina Proceso " + time.strftime("%X"))
@@ -738,27 +730,26 @@ def bono_promotores_pdf():
 			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
 			try:
 				has_agent = False
-				statement = connection.cursor()
-				c_head = connection.cursor()
-				statement.execute(
-					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
-					c_head=c_head, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.pdf'
 
 				virtual_wb = BytesIO()
 				doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((432*mm, 546*mm)))
 				flowables = []
+				cursors = []
+				for times in range(2):
+					cursor = connection.cursor()
+					query = getquery('P', 'BONO', times, P_Clave, P_Feini, P_Fefin)
+					cursor.execute(query)
+					cursors.append(cursor)
 
-
-				data_header = []
-				for row in c_head:
+				for row in cursors[0]:
 					has_agent = True
 					lista_aux = []
 					for i in range(0, len(row)):
 						lista_aux.append(row[i])
+
+				cursors[0].close()
 				if not has_agent:
-					statement.close()
-					c_head.close()
 					return make_response(jsonify(succes=False, message="Codigo de agente no encontrado"), 400)
 				header_all = [("   ","   ","ESTADO DE CUENTA DE BONOS","   ","   "),
 							  ("Nombre del SAT para Sura:", "Seguros SURA S.A. de C.V","     ","Nombre del Promotor:",lista_aux[0]),
@@ -774,11 +765,7 @@ def bono_promotores_pdf():
 				tbl = Table(header_all)
 				tbl.setStyle(grid)
 				flowables.append(tbl)
-				c_head.close()
-				c_body = connection.cursor()
-				statement.execute(
-					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
-					c_body=c_body, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
+
 				j = 0
 				lista = getHeadColumns("pdf")
 				data_body = []
@@ -787,7 +774,7 @@ def bono_promotores_pdf():
 				for item in lista:
 					lista_aux.append(item)
 				data_body.append(lista_aux)
-				for row in c_body:
+				for row in cursors[1]:
 					has_data=True
 					lista_aux = []
 					for i in range(0, len(row)):
@@ -797,23 +784,18 @@ def bono_promotores_pdf():
 							else:
 								lista_aux.append(row[i])
 					data_body.append(lista_aux)
+				cursors[1].close()
 				if not has_data:
-					statement.close()
-					c_body.close()
 					return make_response(jsonify(succes=False, message="Codigo de promotor no retorna data en esas fechas"), 400)
 				tbl = Table(data_body)
 				tblstyle = TableStyle([('GRID',(0,0),(0,0),0.25,colors.gray),('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),('FONTSIZE', (0, 0), (0, 0), 7)])
 				tbl.setStyle(tblstyle)
 				flowables.append(tbl)
 
-				statement.close()
-				c_body.close()
 				doc.build(flowables)
 
 			except Exception as ex:
 				app.logger.error(ex)
-				statement.close()
-				c_head.close()
 		except Exception as ex:
 			app.logger.error(ex)
 		print("\nTermina Proceso " + time.strftime("%X"))
