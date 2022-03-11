@@ -1257,5 +1257,64 @@ def getTableNamesComisiones(tabla):
 	return nombre
 
 
+def getquery(clave,tipo,tabla,codigo,desde,hasta):
+	query = ""
+	if clave == 'A':
+		if tipo == 'BONO':
+			if tabla == 0:
+				query = f"SELECT DISTINCT d.dsnombre Nombre, a.cdagente Clave, d.cdideper RFC, e.dsdomici DIRECCION, 'Agente' Tipo_Productor, b.cdpromot||' - '||c.dspromot PROMOTORIA, a.cdagente Clave_Agente, PKG_Alea_Algoritmos_Cob.fr_Recup_CLABE(a.cdagente) CUENTA_CLABE, TO_CHAR(SYSDATE,'DD/MM/YYYY') PERIODO_CORTE, {desde} FEINICIO, {hasta} FEFIN, TO_CHAR((SELECT Min(feenvio) FROM tsia_movagen A ,BON_TPAGLIQ B WHERE B.NUMPRELIQ =A.NUMPRELIQ AND b.FEENVIO BETWEEN TO_DATE({desde},'dd/mm/yyyy') AND TO_DATE({hasta},'dd/mm/yyyy') AND a.cdagente= {codigo} AND B.CDAGPROU = A.CDAGENTE AND B.CDCVEMOV = A.CDCVEMOV AND B.CDCONC = A.CDCONC ),'DD/MM/YYYY') FECHA_PRELIQ FROM tsia_movagen a, tsia_catagt b, tsia_promotor c, mpersona d, mdomicil e WHERE TRUNC(a.femovimi) BETWEEN TO_DATE({desde},'DD/MM/YYYY') AND TO_DATE({hasta},'DD/MM/YYYY') AND a.cdagente = {codigo} AND a.cdagente = b.cdagente AND b.cdpromot = c.cdpromot AND b.cdperson = d.cdperson AND d.cdperson = e.cdperson AND e.nmorddom = 1 AND a.ptimport <> 0"
+			if tabla == 1:
+				query = f"SELECT MAIN.NMBONO,MAIN.DSBONO,MAIN.CDTIPBON, MAIN.CDGRUPO,MAIN.CDUNIECO, MAIN.CDRAMO,MAIN.NMPOLIZA, nomtomador(MAIN.CDUNIECO, MAIN.CDRAMO, 'M', MAIN.NMPOLIZA, 9999999999999999999) CONTRATANTE, MAIN.cdagente,(SELECT OTVALOR07 FROM TVALOPOL Z WHERE Z.CDUNIECO=MAIN.CDUNIECO AND Z.CDRAMO=MAIN.CDRAMO AND Z.NMPOLIZA=MAIN.NMPOLIZA AND Z.ESTADO='M' AND Z.NMSUPLEM=(SELECT MAX(NMSUPLEM) FROM TVALOPOL Y WHERE Y.CDUNIECO=Z.CDUNIECO AND Z.CDRAMO=Y.CDRAMO AND Z.NMPOLIZA=Y.NMPOLIZA AND Z.ESTADO=Y.ESTADO)) COMPUTABILIDAD, MAIN.TIPOCAMB, MAIN.NMRECIBO,MAIN.SERIERECIBO,NVL(MAIN.PMATOTAL,0) PRIMA_TOTAL,NVL(MAIN.PMANETAP,0) PRIMA_NETA,MAIN.PORCEPAG, ABS(MAIN.IMPORAGTN),(ABS(MAIN.IMPORAGTN)+ABS(MAIN.IMPORAGTI)) TOTAL_PAGADO ,MAIN.NUMPRELIQ, DECODE(NVL(MAIN.CDCOMPRO,0),0,'',DECODE(MAIN.CDMETPAG,'EFT',MAIN.NMTRANSF,'CHK',MAIN.NMCHEQUE,MAIN.CDCOMPRO)) NUM_COMPROBANTE, TO_CHAR(MAIN.FEMOVIMI,'DD/MM/YYYY') FECHA, (DECODE ((SELECT DISTINCT 'SI' FROM bon_trecexc WHERE nmbono = MAIN.nmbono AND cdrecpag = MAIN.cdrecpag AND cdagente = MAIN.cdagente AND cdtipmov = MAIN.cdtipmov),'SI', 'SI', 'NO' )) EXCLUDO, (SELECT DECODE(swexcep, '1', 'Por agente para Rank', '2', 'Por agente para Pago', '3', 'Por agente para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 1) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_AGENTE, (SELECT DECODE(swexcep, '1', 'Por promotor para Rank', '2', 'Por promotor para Pago', '3', 'Por promotor para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 2) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_PROMOTOR, (SELECT DECODE(swexcep, '1', 'Por ramo para Rank', '2', 'Por ramo para Pago', '3', 'Por ramo para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 4) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_RAMO, (SELECT DECODE(swexcep, '1', 'Por oficina para Rank', '2', 'Por oficina para Pago', '3', 'Por oficina para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 5) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov) POR_OFICINA, (SELECT DECODE(swexcep,'1', 'Por poliza para Rank', '2', 'Por poliza para Pago', '3', 'Por poliza para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 6) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_POLIZA, (SELECT DECODE(swexcep, '1', 'Por grupo para Rank', '2', 'Por grupo para Pago', '3', 'Por grupo para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 7) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_GRUPO, (SELECT DECODE(swexcep, '1', 'Por subgrupo para Rank', '2', 'Por subgrupo para Pago', '3', 'Por subgrupo para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 8) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov) POR_SUBGRUPO, (SELECT DECODE(swexcep, '1', 'Por tipo de persona para Rank', '2', 'Por tipo de persona para Pago', '3', 'Por tipo de persona para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 9) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_TIP_PERS, (SELECT DECODE(swexcep, '1', 'Por Reaseguro para Rank', '2', 'Por Reaseguro para Pago', '3', 'Por Reaseguro para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 10) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_REASEGURO, (SELECT DECODE(swexcep, '1', 'Por Coaseguro para Rank', '2', 'Por Coaseguro para Pago', '3', 'Por Coaseguro para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 11) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_COASEGURO, (SELECT DECODE(swexcep, '1', 'Por multianual para Rank', '2', 'Por multianual para Pago', '3', 'Por multianual para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 12) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_MULTIANUAL, (SELECT DECODE(swexcep, '1', 'Por dividendos para Rank', '2', 'Por dividendos para Pago', '3', 'Por dividendos para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 13) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_DIVIDENDOS, (SELECT DECODE(swexcep, '1', 'Por no computable para Rank', '2', 'Por no computable para Pago', '3', 'Por no computable para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 14) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_NO_COMPU, (SELECT DECODE(swexcep, '1', 'Por portafolio para Rank', '2', 'Por portafolio para Pago', '3', 'Por portafolio para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 15) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_PORTAFOLIO, (SELECT DECODE(swexcep, '1', 'Por prestador para Rank', '2', 'Por prestador para Pago', '3', 'Por prestador para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 17) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_PRESTADOR, (SELECT DECODE(swexcep, '1', 'Por negocio para Rank', '2', 'Por negocio para Pago', '3', 'Por negocio para Todo') FROM bon_trecexc aa, (SELECT codigo, descripl FROM tmanteni WHERE cdtabla = 'CATEXCBON' AND codigo = 18) bb WHERE aa.nmbono = MAIN.nmbono AND aa.cdexcep = bb.codigo AND aa.cdrecpag = MAIN.cdrecpag AND aa.cdagente = MAIN.cdagente AND aa.cdtipmov = MAIN.cdtipmov AND ROWNUM < 2) POR_NEGOCIO FROM (SELECT E.TIPOCAMB, C.NMBONO,D.DSBONO,C.CDTIPBON, E.CDGRUPO,E.CDUNIECO, E.CDRAMO,E.NMPOLIZA,a.cdagente,E.NMRECIBO,F.SERIERECIBO,G.NMTRANSF,G.CDMETPAG,G.NMCHEQUE,G.CDCOMPRO, F.PMATOTAL,F.PMANETAP,C.PORCEPAG,F.IMPORAGTN,F.IMPORAGTI,A.NUMPRELIQ,A.FEMOVIMI,E.CDTIPMOV,E.CDRECPAG FROM TSIA_MOVAGEN A , BON_TPAGLIQ B, BON_TCONFBON C, BON_TCATBONO D, VBON_DESGLOSE E, tsia_detcom F, MINTPSOFT G WHERE A.CDAGENTE ={codigo} AND A.FEMOVIMI BETWEEN TO_DATE({desde},'dd/mm/yyyy') AND TO_DATE({hasta},'dd/mm/yyyy') AND A.CDCONC IN ('B','BC') AND B.NUMPRELIQ =A.NUMPRELIQ AND B.CDAGPROU = A.CDAGENTE AND B.CDCVEMOV = A.CDCVEMOV AND B.CDCONC = A.CDCONC AND C.NMBONO = B.NMBONO AND D.CDBONO = C.CDBONO --AND E.NMPOLIZA= C.NMPOLIZA --AND E.CDUNIECO= C.CDUNIECO --AND E.CDRAMO= C.CDRAMO AND E.NMBONO= C.NMBONO AND A.CDAGENTE= E.CDAGENTE AND E.NMPOLIZA= F.NMPOLIZA AND E.CDUNIECO= F.CDUNIECO AND E.CDRAMO= F.CDRAMO AND E.NMRECIBO= F.NMRECIBO AND A.CDAGENTE= F.CDAGENTE AND B.NUMPRELIQ =G.NUMPRELI (+) AND A.CDCVEMOV = B.CDCVEMOV(+) AND A.CDCONC = B.CDCONC (+) GROUP BY E.TIPOCAMB,C.NMBONO,D.DSBONO, E.CDGRUPO, E.CDUNIECO, E.CDRAMO,E.NMPOLIZA,a.cdagente, F.SERIERECIBO,G.NMTRANSF,C.CDTIPBON, F.PMATOTAL,F.PMANETAP,G.CDMETPAG,G.NMCHEQUE,G.CDCOMPRO, C.PORCEPAG,F.IMPORAGTN, F.IMPORAGTI,E.CDTIPMOV,E.CDRECPAG, A.NUMPRELIQ,E.NMRECIBO,A.FEMOVIMI ORDER BY FEMOVIMI ASC) MAIN"
+		if tipo == 'COMISION':
+			if tabla == 0:
+				query = ""
+			if tabla == 1:
+				query = ""
+			if tabla == 2:
+				query = ""
+			if tabla == 3:
+				query = ""
+			if tabla == 4:
+				query = ""
+			if tabla == 5:
+				query = ""
+			if tabla == 6:
+				query = ""
+			if tabla == 7:
+				query = ""
+			if tabla == 8:
+				query = ""
+			if tabla == 9:
+				query = ""
+	if clave == 'P':
+		if tipo == 'BONO':
+			if tabla == 0:
+				query = ""
+			if tabla == 1:
+				query = ""
+		if tipo == 'COMISION':
+			if tabla == 0:
+				query = ""
+			if tabla == 1:
+				query = ""
+			if tabla == 2:
+				query = ""
+			if tabla == 3:
+				query = ""
+			if tabla == 4:
+				query = ""
+			if tabla == 5:
+				query = ""
+			if tabla == 6:
+				query = ""
+			if tabla == 7:
+				query = ""
+			if tabla == 8:
+				query = ""
+			if tabla == 9:
+				query = ""
+	return query
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=SERVER_PORT)
