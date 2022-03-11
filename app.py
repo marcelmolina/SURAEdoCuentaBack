@@ -150,11 +150,11 @@ def bono_agente_xlsx():
 					c_body.close()
 					return make_response(jsonify(succes=False, message="Codigo de agente no retorna data en esas fechas"), 400)
 			except Exception as ex:
-				print(ex)
+				app.logger.error(ex)
 				statement.close()
 				c_head.close()
 		except Exception as ex:
-			print(ex)
+			app.logger.error(ex)
 			statement.close()
 			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
@@ -163,7 +163,7 @@ def bono_agente_xlsx():
 		wb.save(virtual_wb)
 		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
 	except Exception as ex:
-		print(ex)
+		app.logger.error(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 @app.route(context_path + '/agentes/bonos/pdf', methods=['GET'])
@@ -268,11 +268,11 @@ def bono_agente_pdf():
 				doc.build(flowables)
 
 			except Exception as ex:
-				print(ex)
+				app.logger.error(ex)
 				statement.close()
 				c_head.close()
 		except Exception as ex:
-			print(ex)
+			app.logger.error(ex)
 			statement.close()
 			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
@@ -280,7 +280,7 @@ def bono_agente_pdf():
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
 						 headers={"Content-Disposition": "attachment;filename=" + libro_nombre})
 	except Exception as ex:
-		print(ex)
+		app.logger.error(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 @app.route(context_path + '/agentes/comisiones/pdf', methods=['GET'])
@@ -400,7 +400,7 @@ def comisiones_agente_pdf():
 				doc.build(flowables)
 
 			except Exception as ex:
-				print(ex)
+				app.logger.error(ex)
 				statement.close()
 				c_head.close()
 				c1.close()
@@ -413,7 +413,7 @@ def comisiones_agente_pdf():
 				c8.close()
 				c9.close()
 		except Exception as ex:
-			print(ex)
+			app.logger.error(ex)
 			statement.close()
 			c_head.close()
 			c1.close()
@@ -430,7 +430,7 @@ def comisiones_agente_pdf():
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
 						 headers={"Content-Disposition": "attachment;filename=" + libro_nombre})
 	except Exception as ex:
-		print(ex)
+		app.logger.error(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 
@@ -555,7 +555,7 @@ def comisiones_agente_xlsx():
 				statement.close()
 			# fin de bloque
 			except Exception as ex:
-				print(ex)
+				app.logger.error(ex)
 				statement.close()
 				c_head.close()
 				c1.close()
@@ -568,7 +568,7 @@ def comisiones_agente_xlsx():
 				c8.close()
 				c9.close()
 		except Exception as ex:
-			print(ex)
+			app.logger.error(ex)
 			statement.close()
 			c_head.close()
 			c1.close()
@@ -586,7 +586,7 @@ def comisiones_agente_xlsx():
 		wb.save(virtual_wb)
 		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
 	except Exception as ex:
-		print(ex)
+		app.logger.error(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 
@@ -704,11 +704,11 @@ def bono_promotores_xlsx():
 					c_body.close()
 					return make_response(jsonify(succes=False, message="Codigo de promotor no retorna data en esas fechas"), 400)
 			except Exception as ex:
-				print(ex)
+				app.logger.error(ex)
 				statement.close()
 				c_head.close()
 		except Exception as ex:
-			print(ex)
+			app.logger.error(ex)
 			statement.close()
 			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
@@ -717,7 +717,7 @@ def bono_promotores_xlsx():
 		wb.save(virtual_wb)
 		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
 	except Exception as ex:
-		print(ex)
+		app.logger.error(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 @app.route(context_path + '/promotores/bonos/pdf', methods=['GET'])
@@ -822,11 +822,11 @@ def bono_promotores_pdf():
 				doc.build(flowables)
 
 			except Exception as ex:
-				print(ex)
+				app.logger.error(ex)
 				statement.close()
 				c_head.close()
 		except Exception as ex:
-			print(ex)
+			app.logger.error(ex)
 			statement.close()
 			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
@@ -834,7 +834,7 @@ def bono_promotores_pdf():
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
 						 headers={"Content-Disposition": "attachment;filename=" + libro_nombre})
 	except Exception as ex:
-		print(ex)
+		app.logger.error(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 
@@ -954,7 +954,7 @@ def comisiones_promotores_pdf():
 				doc.build(flowables)
 
 			except Exception as ex:
-				print(ex)
+				app.logger.error(ex)
 				statement.close()
 				c_head.close()
 				c1.close()
@@ -967,7 +967,7 @@ def comisiones_promotores_pdf():
 				c8.close()
 				c9.close()
 		except Exception as ex:
-			print(ex)
+			app.logger.error(ex)
 			statement.close()
 			c_head.close()
 			c1.close()
@@ -984,7 +984,7 @@ def comisiones_promotores_pdf():
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
 						 headers={"Content-Disposition": "attachment;filename=" + libro_nombre})
 	except Exception as ex:
-		print(ex)
+		app.logger.error(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 @app.route(context_path + '/promotores/comisiones/excel', methods=['GET'])
@@ -1109,7 +1109,7 @@ def comisiones_promotor_xlsx():
 				statement.close()
 			# fin de bloque
 			except Exception as ex:
-				print(ex)
+				app.logger.error(ex)
 				statement.close()
 				c_head.close()
 				c1.close()
@@ -1122,7 +1122,7 @@ def comisiones_promotor_xlsx():
 				c8.close()
 				c9.close()
 		except Exception as ex:
-			print(ex)
+			app.logger.error(ex)
 			statement.close()
 			c_head.close()
 			c1.close()
@@ -1140,7 +1140,7 @@ def comisiones_promotor_xlsx():
 		wb.save(virtual_wb)
 		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
 	except Exception as ex:
-		print(ex)
+		app.logger.error(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 
