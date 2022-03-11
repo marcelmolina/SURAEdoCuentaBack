@@ -14,6 +14,17 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape
 from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+SERVER_PORT = os.getenv('SERVER_PORT')
+DB_HOST = os.getenv('DB_HOST')
+DB_PORT = os.getenv('DB_PORT')
+DB_SERVICE = os.getenv('DB_SERVICE')
+DB_USER = os.getenv('DB_USER')
+DB_PWD = os.getenv('DB_PWD')
+DB_SCHEMA = os.getenv('DB_SCHEMA')
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
@@ -41,11 +52,12 @@ def bono_agente_xlsx():
 		P_Fefin = request.args['hasta']
 		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = "10.142.74.234"
-		port = 1526
-		service_name = 'alead11g'
-		user = 'OPS$FDDAZARA'
-		password = 'Desarrollo_1d'
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
 		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
 		# Declaracion de cursores a utilizar
 		try:
@@ -57,7 +69,7 @@ def bono_agente_xlsx():
 				c_head = connection.cursor()
 				has_agent = False
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
 					c_head=c_head, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.xlsx'
 				for row in c_head:
@@ -74,7 +86,7 @@ def bono_agente_xlsx():
 					return make_response(jsonify(succes=False, message="Codigo de agente no encontrado"), 400)
 				c_head.close()
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
 					c_body=c_body, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				j = 0
 				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
@@ -138,9 +150,11 @@ def bono_agente_xlsx():
 					c_body.close()
 					return make_response(jsonify(succes=False, message="Codigo de agente no retorna data en esas fechas"), 400)
 			except Exception as ex:
+				print(ex)
 				statement.close()
 				c_head.close()
 		except Exception as ex:
+			print(ex)
 			statement.close()
 			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
@@ -149,6 +163,7 @@ def bono_agente_xlsx():
 		wb.save(virtual_wb)
 		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
 	except Exception as ex:
+		print(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 @app.route(context_path + '/agentes/bonos/pdf', methods=['GET'])
@@ -167,11 +182,12 @@ def bono_agente_pdf():
 		P_Fefin = request.args['hasta']
 		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = "10.142.74.234"
-		port = 1526
-		service_name = 'alead11g'
-		user = 'OPS$FDDAZARA'
-		password = 'Desarrollo_1d'
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
 		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
 		# Declaracion de cursores a utilizar
 		try:
@@ -181,7 +197,7 @@ def bono_agente_pdf():
 				statement = connection.cursor()
 				c_head = connection.cursor()
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
 					c_head=c_head, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.pdf'
 
@@ -218,7 +234,7 @@ def bono_agente_pdf():
 				c_head.close()
 				c_body = connection.cursor()
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
 					c_body=c_body, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				j = 0
 				lista = getHeadColumns("pdf")
@@ -252,9 +268,11 @@ def bono_agente_pdf():
 				doc.build(flowables)
 
 			except Exception as ex:
+				print(ex)
 				statement.close()
 				c_head.close()
 		except Exception as ex:
+			print(ex)
 			statement.close()
 			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
@@ -262,6 +280,7 @@ def bono_agente_pdf():
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
 						 headers={"Content-Disposition": "attachment;filename=" + libro_nombre})
 	except Exception as ex:
+		print(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 @app.route(context_path + '/agentes/comisiones/pdf', methods=['GET'])
@@ -274,11 +293,12 @@ def comisiones_agente_pdf():
 		P_Fefin = request.args['hasta']
 		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = "10.142.74.234"
-		port = 1526
-		service_name = 'alead11g'
-		user = 'OPS$FDDAZARA'
-		password = 'Desarrollo_1d'
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
 		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
 		# Declaracion de cursores a utilizar
 		try:
@@ -297,7 +317,7 @@ def comisiones_agente_pdf():
 				c8 = connection.cursor()
 				c9 = connection.cursor()
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
 					c_head=c_head,c1=c1,c2=c2,c3=c3,c4=c4,c5=c5,c6=c6,c7=c7,c8=c8,c9=c9, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.pdf'
 				cursores = []
@@ -380,6 +400,7 @@ def comisiones_agente_pdf():
 				doc.build(flowables)
 
 			except Exception as ex:
+				print(ex)
 				statement.close()
 				c_head.close()
 				c1.close()
@@ -392,6 +413,7 @@ def comisiones_agente_pdf():
 				c8.close()
 				c9.close()
 		except Exception as ex:
+			print(ex)
 			statement.close()
 			c_head.close()
 			c1.close()
@@ -408,6 +430,7 @@ def comisiones_agente_pdf():
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
 						 headers={"Content-Disposition": "attachment;filename=" + libro_nombre})
 	except Exception as ex:
+		print(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 
@@ -421,11 +444,12 @@ def comisiones_agente_xlsx():
 		P_Fefin = request.args['hasta']
 		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = "10.142.74.234"
-		port = 1526
-		service_name = 'alead11g'
-		user = 'OPS$FDDAZARA'
-		password = 'Desarrollo_1d'
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
 		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
 		# Declaracion de cursores a utilizar
 		try:
@@ -448,7 +472,7 @@ def comisiones_agente_xlsx():
 				c8 = connection.cursor()
 				c9 = connection.cursor()
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
 					c_head=c_head, c1=c1, c2=c2, c3=c3, c4=c4, c5=c5, c6=c6, c7=c7, c8=c8, c9=c9,
 					Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre = P_Clave + "_" + P_Feini.replace("/", "") + "_" + P_Fefin.replace("/",
@@ -531,6 +555,7 @@ def comisiones_agente_xlsx():
 				statement.close()
 			# fin de bloque
 			except Exception as ex:
+				print(ex)
 				statement.close()
 				c_head.close()
 				c1.close()
@@ -543,6 +568,7 @@ def comisiones_agente_xlsx():
 				c8.close()
 				c9.close()
 		except Exception as ex:
+			print(ex)
 			statement.close()
 			c_head.close()
 			c1.close()
@@ -560,6 +586,7 @@ def comisiones_agente_xlsx():
 		wb.save(virtual_wb)
 		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
 	except Exception as ex:
+		print(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 
@@ -579,11 +606,12 @@ def bono_promotores_xlsx():
 		P_Fefin = request.args['hasta']
 		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = "10.142.74.234"
-		port = 1526
-		service_name = 'alead11g'
-		user = 'OPS$FDDAZARA'
-		password = 'Desarrollo_1d'
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
 		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
 		# Declaracion de cursores a utilizar
 		try:
@@ -595,7 +623,7 @@ def bono_promotores_xlsx():
 				c_head = connection.cursor()
 				has_agent = False
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
 					c_head=c_head, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.xlsx'
 				for row in c_head:
@@ -612,7 +640,7 @@ def bono_promotores_xlsx():
 					return make_response(jsonify(succes=False, message="Codigo de promotor no encontrado"), 400)
 				c_head.close()
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
 					c_body=c_body, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				j = 0
 				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
@@ -676,9 +704,11 @@ def bono_promotores_xlsx():
 					c_body.close()
 					return make_response(jsonify(succes=False, message="Codigo de promotor no retorna data en esas fechas"), 400)
 			except Exception as ex:
+				print(ex)
 				statement.close()
 				c_head.close()
 		except Exception as ex:
+			print(ex)
 			statement.close()
 			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
@@ -687,6 +717,7 @@ def bono_promotores_xlsx():
 		wb.save(virtual_wb)
 		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
 	except Exception as ex:
+		print(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 @app.route(context_path + '/promotores/bonos/pdf', methods=['GET'])
@@ -705,11 +736,12 @@ def bono_promotores_pdf():
 		P_Fefin = request.args['hasta']
 		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = "10.142.74.234"
-		port = 1526
-		service_name = 'alead11g'
-		user = 'OPS$FDDAZARA'
-		password = 'Desarrollo_1d'
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
 		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
 		# Declaracion de cursores a utilizar
 		try:
@@ -719,7 +751,7 @@ def bono_promotores_pdf():
 				statement = connection.cursor()
 				c_head = connection.cursor()
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.HEADER_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head  ); end;",
 					c_head=c_head, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.pdf'
 
@@ -756,7 +788,7 @@ def bono_promotores_pdf():
 				c_head.close()
 				c_body = connection.cursor()
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_BONO_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_body  ); end;",
 					c_body=c_body, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				j = 0
 				lista = getHeadColumns("pdf")
@@ -790,9 +822,11 @@ def bono_promotores_pdf():
 				doc.build(flowables)
 
 			except Exception as ex:
+				print(ex)
 				statement.close()
 				c_head.close()
 		except Exception as ex:
+			print(ex)
 			statement.close()
 			c_head.close()
 		print("\nTermina Proceso " + time.strftime("%X"))
@@ -800,6 +834,7 @@ def bono_promotores_pdf():
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
 						 headers={"Content-Disposition": "attachment;filename=" + libro_nombre})
 	except Exception as ex:
+		print(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 
@@ -813,11 +848,12 @@ def comisiones_promotores_pdf():
 		P_Fefin = request.args['hasta']
 		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = "10.142.74.234"
-		port = 1526
-		service_name = 'alead11g'
-		user = 'OPS$FDDAZARA'
-		password = 'Desarrollo_1d'
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
 		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
 		# Declaracion de cursores a utilizar
 		try:
@@ -836,7 +872,7 @@ def comisiones_promotores_pdf():
 				c8 = connection.cursor()
 				c9 = connection.cursor()
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_PROMOTOR ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
 					c_head=c_head,c1=c1,c2=c2,c3=c3,c4=c4,c5=c5,c6=c6,c7=c7,c8=c8,c9=c9, Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.pdf'
 
@@ -918,6 +954,7 @@ def comisiones_promotores_pdf():
 				doc.build(flowables)
 
 			except Exception as ex:
+				print(ex)
 				statement.close()
 				c_head.close()
 				c1.close()
@@ -930,6 +967,7 @@ def comisiones_promotores_pdf():
 				c8.close()
 				c9.close()
 		except Exception as ex:
+			print(ex)
 			statement.close()
 			c_head.close()
 			c1.close()
@@ -946,6 +984,7 @@ def comisiones_promotores_pdf():
 		return Response(virtual_wb.getvalue(), mimetype="application/pdf",
 						 headers={"Content-Disposition": "attachment;filename=" + libro_nombre})
 	except Exception as ex:
+		print(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 @app.route(context_path + '/promotores/comisiones/excel', methods=['GET'])
@@ -958,11 +997,12 @@ def comisiones_promotor_xlsx():
 		P_Fefin = request.args['hasta']
 		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = "10.142.74.234"
-		port = 1526
-		service_name = 'alead11g'
-		user = 'OPS$FDDAZARA'
-		password = 'Desarrollo_1d'
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
 		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
 		# Declaracion de cursores a utilizar
 		try:
@@ -985,7 +1025,7 @@ def comisiones_promotor_xlsx():
 				c8 = connection.cursor()
 				c9 = connection.cursor()
 				statement.execute(
-					"begin  PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_PROMOTOR ( :Pb_PROMOTOR, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
+					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_PROMOTOR ( :Pb_PROMOTOR, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
 					c_head=c_head, c1=c1, c2=c2, c3=c3, c4=c4, c5=c5, c6=c6, c7=c7, c8=c8, c9=c9,
 					Pb_PROMOTOR=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 				libro_nombre = P_Clave + "_" + P_Feini.replace("/", "") + "_" + P_Fefin.replace("/",
@@ -1069,6 +1109,7 @@ def comisiones_promotor_xlsx():
 				statement.close()
 			# fin de bloque
 			except Exception as ex:
+				print(ex)
 				statement.close()
 				c_head.close()
 				c1.close()
@@ -1081,6 +1122,7 @@ def comisiones_promotor_xlsx():
 				c8.close()
 				c9.close()
 		except Exception as ex:
+			print(ex)
 			statement.close()
 			c_head.close()
 			c1.close()
@@ -1098,6 +1140,7 @@ def comisiones_promotor_xlsx():
 		wb.save(virtual_wb)
 		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
 	except Exception as ex:
+		print(ex)
 		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 
@@ -1227,4 +1270,4 @@ def getTableNamesComisiones(tabla):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=SERVER_PORT)
