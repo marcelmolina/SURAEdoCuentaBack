@@ -16,6 +16,7 @@ from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 import os
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 load_dotenv()
 SERVER_PORT = os.getenv('SERVER_PORT')
@@ -27,6 +28,7 @@ DB_PWD = os.getenv('DB_PWD')
 DB_SCHEMA = os.getenv('DB_SCHEMA')
 
 app = Flask(__name__)
+CORS(app)
 app.config['JSON_SORT_KEYS'] = False
 context_path = "/api/estados-cuenta/"
 
