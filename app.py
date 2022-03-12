@@ -248,6 +248,7 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
 				# NUEVO BLOQUE SECUENCIAL
 				c_count = 1
 				for cursor in cursors:
+					fila_totales = [0, 0, 0, 0, 0]
 					lista = getHeadColumnsComisones("excel", c_count)
 					alphabet_string = string.ascii_uppercase
 					alphabet_list = list(alphabet_string)
@@ -276,17 +277,68 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
 					j = 0
 					k = 0
 					f += 1
+					has_data= False
 					for row in cursor:
 						for i in range(0, len(row)):
-							valor = row[i]
-							ws.cell(row=f, column=i + 1).value = valor
-							ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-							if len(str(valor)) > 17:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-								if len(str(valor)) > 25:
-									ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
+							if c_count not in [5, 6, 7, 8]:
+								valor = row[i]
+								if c_count in [1, 2]:
+									if i != 0:
+										valor = "{:,.2f}".format(valor)
+								if c_count in [3, 4, 9, 10]:
+									if i != 0:
+										valor = "{:,.2f}".format(valor)
+								if c_count in [11, 12]:
+									if i in [1, 3, 6, 7, 8]:
+										valor = "{:,.2f}".format(valor)
+								ws.cell(row=f, column=i + 1).value = valor
+								ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
+								if len(str(valor)) > 17:
+									ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
+									if len(str(valor)) > 25:
+										ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
+							else:
+								valor = row[i]
+								if i in [10, 11, 14, 15]:
+									valor = "{:,.2f}".format(valor)
+								if i == 10:
+									fila_totales[0] += abs(row[i])
+								if i == 11:
+									fila_totales[1] += abs(row[i])
+								if i == 13:
+									fila_totales[2] += abs(row[i])
+								if i == 14:
+									fila_totales[3] += abs(row[i])
+								if i == 15:
+									fila_totales[4] += abs(row[i])
+								has_data = True
+								ws.cell(row=f, column=i + 1).value = valor
+								ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
+								if len(str(valor)) > 17:
+									ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
+									if len(str(valor)) > 25:
+										ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
 						f += 1
 					cursor.close()
+					if c_count in [5, 6, 7, 8] and has_data:
+						fila_totales[0] = "{:,.2f}".format(fila_totales[0])
+						fila_totales[1] = "{:,.2f}".format(fila_totales[1])
+						fila_totales[2] = "{:,.2f}".format(fila_totales[2])
+						fila_totales[3] = "{:,.2f}".format(fila_totales[3])
+						fila_totales[4] = "{:,.2f}".format(fila_totales[4])
+						ws.cell(row=f, column=10).value = "TOTAL"
+						ws.cell(row=f, column=10).alignment = Alignment(horizontal="center", vertical="center")
+						ws.cell(row=f, column=11).value = fila_totales[0]
+						ws.cell(row=f, column=11).alignment = Alignment(horizontal="center", vertical="center")
+						ws.cell(row=f, column=12).value = fila_totales[1]
+						ws.cell(row=f, column=12).alignment = Alignment(horizontal="center", vertical="center")
+						ws.cell(row=f, column=14).value = fila_totales[2]
+						ws.cell(row=f, column=14).alignment = Alignment(horizontal="center", vertical="center")
+						ws.cell(row=f, column=15).value = fila_totales[3]
+						ws.cell(row=f, column=15).alignment = Alignment(horizontal="center", vertical="center")
+						ws.cell(row=f, column=16).value = fila_totales[4]
+						ws.cell(row=f, column=16).alignment = Alignment(horizontal="center", vertical="center")
+						f += 1
 					c_count += 1
 				# fin de bloque
 				virtual_wb = BytesIO()
