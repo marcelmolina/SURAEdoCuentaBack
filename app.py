@@ -128,147 +128,18 @@ def comisiones_agente_pdf():
 
 @app.route(context_path + '/agentes/comisiones/excel', methods=['GET'])
 def comisiones_agente_xlsx():
+	P_Clave = request.args['codigo']
+	P_Feini = request.args['desde']
+	P_Fefin = request.args['hasta']
+	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
+	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		print("Estado de cuentas de Comisiones")
-
-		P_Clave = request.args['codigo']
-		P_Feini = request.args['desde']
-		P_Fefin = request.args['hasta']
-		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
-		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = DB_HOST
-		port = DB_PORT
-		service_name = DB_SERVICE
-		user = DB_USER
-		password = DB_PWD
-		schema = DB_SCHEMA
-		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
-		# Declaracion de cursores a utilizar
-		try:
-			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
-			try:
-				wb = opyxl.load_workbook("plantilla_agentes.xlsx")
-				ws = wb.worksheets[0]
-				ws.cell(row=1, column=6).value = "ESTADOS DE CUENTA DE COMISIONES"
-				ws.title = "Estado de Cuenta de Comisiones"
-				statement = connection.cursor()
-				has_agent = False
-				c_head = connection.cursor()
-				c1 = connection.cursor()
-				c2 = connection.cursor()
-				c3 = connection.cursor()
-				c4 = connection.cursor()
-				c5 = connection.cursor()
-				c6 = connection.cursor()
-				c7 = connection.cursor()
-				c8 = connection.cursor()
-				c9 = connection.cursor()
-				statement.execute(
-					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_AGENTE ( :Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
-					c_head=c_head, c1=c1, c2=c2, c3=c3, c4=c4, c5=c5, c6=c6, c7=c7, c8=c8, c9=c9,
-					Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
-				libro_nombre = P_Clave + "_" + P_Feini.replace("/", "") + "_" + P_Fefin.replace("/",
-																								"") + '_comisiones.xlsx'
-				for row in c_head:
-					has_agent = True
-					for i in range(0, len(row) - 4):
-						ws.cell(row=4 + i, column=9).value = row[i]
-					for i in range(len(row) - 4, len(row)):
-						ws.cell(row=i, column=4).value = row[i]
-				if not has_agent:
-					statement.close()
-					c_head.close()
-					c1.close()
-					c2.close()
-					c3.close()
-					c4.close()
-					c5.close()
-					c6.close()
-					c7.close()
-					c8.close()
-					c9.close()
-					return make_response(jsonify(succes=False, message="Codigo de agente no encontrado"), 400)
-				c_head.close()
-				f = 13 #principal gestor de filas del archivo
-				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
-				#NUEVO BLOQUE SECUENCIAL
-				cursores = []
-				cursores.append(c1)
-				cursores.append(c2)
-				cursores.append(c3)
-				cursores.append(c4)
-				cursores.append(c5)
-				cursores.append(c6)
-				cursores.append(c7)
-				cursores.append(c8)
-				cursores.append(c9)
-				c_count = 1
-				for cursor in cursores:
-					lista = getHeadColumnsComisones("excel", c_count)
-					alphabet_string = string.ascii_uppercase
-					alphabet_list = list(alphabet_string)
-					ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count)
-					ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-					f += 1
-					j = 0
-					for item in lista:
-						ws.cell(row=f, column=j + 1).value = item
-						ws.cell(row=f, column=j + 1).fill = greyFill
-						ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-						ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-						columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-						multiplicador = 2
-						lista_columnas_esp = ['A','B','C', 'H']
-						ancho = len(item)
-						if len(item) <= 6:
-							ancho *= 2
-						if len(item) > 6 or columna == 'A':
-							ancho *= 1.1
-						if columna in lista_columnas_esp:
-							ancho = 25
-						if c_count == 5:
-							ws.column_dimensions[columna].width = ancho
-						j += 1
-					j = 0
-					k = 0
-					f += 1
-					for row in cursor:
-						for i in range(0, len(row)):
-							valor = row[i]
-							ws.cell(row=f, column=i + 1).value = valor
-							ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-							if len(str(valor)) > 17:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-								if len(str(valor)) > 25:
-									ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-						f += 1
-					cursor.close()
-					c_count += 1
-				statement.close()
-			# fin de bloque
-			except Exception as ex:
-				app.logger.error(ex)
-				statement.close()
-				c_head.close()
-				c1.close()
-				c2.close()
-				c3.close()
-				c4.close()
-				c5.close()
-				c6.close()
-				c7.close()
-				c8.close()
-				c9.close()
-		except Exception as ex:
-			app.logger.error(ex)
-		print("\nTermina Proceso " + time.strftime("%X"))
-
-		virtual_wb = BytesIO()
-		wb.save(virtual_wb)
-		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
+		file, filemime, filename = comisiones_xlsx(P_Clave, P_Feini, P_Fefin, 'A')
+		return Response(file, mimetype=filemime,
+						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
+		return make_response(jsonify(succes=False, message=ex), 400)
 
 
 @app.route(context_path + '/promotores/bonos/excel', methods=['GET'])
@@ -302,6 +173,22 @@ def bono_promotores_pdf():
 		return make_response(jsonify(succes=False, message=ex), 400)
 
 
+@app.route(context_path + '/promotores/comisiones/excel', methods=['GET'])
+def comisiones_promotor_xlsx():
+	P_Clave = request.args['codigo']
+	P_Feini = request.args['desde']
+	P_Fefin = request.args['hasta']
+	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
+	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
+	try:
+		file, filemime, filename = comisiones_xlsx(P_Clave, P_Feini, P_Fefin, 'P')
+		return Response(file, mimetype=filemime,
+						headers={"Content-Disposition": "attachment;filename=" + filename})
+	except Exception as ex:
+		app.logger.error(ex)
+		return make_response(jsonify(succes=False, message=ex), 400)
+
+
 @app.route(context_path + '/promotores/comisiones/pdf', methods=['GET'])
 def comisiones_promotores_pdf():
 	P_Clave = request.args['codigo']
@@ -316,6 +203,104 @@ def comisiones_promotores_pdf():
 	except Exception as ex:
 		app.logger.error(ex)
 		return make_response(jsonify(succes=False, message=ex), 400)
+
+
+def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
+	try:
+		print("Estado de cuentas de Comisiones")
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
+		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
+		# Declaracion de cursores a utilizar
+		try:
+			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
+			try:
+				libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.xlsx'
+				plantilla = "plantilla_agentes.xlsx"
+				if P_COD == 'P':
+					plantilla = "plantilla_promotor.xlsx"
+				wb = opyxl.load_workbook(plantilla)
+				ws = wb.worksheets[0]
+				ws.cell(row=1, column=6).value = "ESTADOS DE CUENTA DE COMISIONES"
+				ws.title = "Estado de Cuenta de Comisiones"
+				cursors = []
+				for times in range(13):
+					cursor = connection.cursor()
+					query = getquery(P_COD, 'COMISION', times, P_Clave, P_Feini, P_Fefin)
+					cursor.execute(query)
+					cursors.append(cursor)
+				has_agent = False
+				for row in cursors[0]:
+					has_agent = True
+					for i in range(0, len(row) - 4):
+						ws.cell(row=4 + i, column=9).value = row[i]
+					for i in range(len(row) - 4, len(row)):
+						ws.cell(row=i, column=4).value = row[i]
+				if not has_agent:
+					raise ValueError('Identificador no encontrado')
+				del cursors[0]
+				f = 13  # principal gestor de filas del archivo
+				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
+				# NUEVO BLOQUE SECUENCIAL
+				c_count = 1
+				for cursor in cursors:
+					lista = getHeadColumnsComisones("excel", c_count)
+					alphabet_string = string.ascii_uppercase
+					alphabet_list = list(alphabet_string)
+					ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count)
+					ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
+					f += 1
+					j = 0
+					for item in lista:
+						ws.cell(row=f, column=j + 1).value = item
+						ws.cell(row=f, column=j + 1).fill = greyFill
+						ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
+						ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
+						columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
+						multiplicador = 2
+						lista_columnas_esp = ['A', 'B', 'C', 'H']
+						ancho = len(item)
+						if len(item) <= 6:
+							ancho *= 2
+						if len(item) > 6 or columna == 'A':
+							ancho *= 1.1
+						if columna in lista_columnas_esp:
+							ancho = 25
+						if c_count == 5:
+							ws.column_dimensions[columna].width = ancho
+						j += 1
+					j = 0
+					k = 0
+					f += 1
+					for row in cursor:
+						for i in range(0, len(row)):
+							valor = row[i]
+							ws.cell(row=f, column=i + 1).value = valor
+							ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
+							if len(str(valor)) > 17:
+								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
+								if len(str(valor)) > 25:
+									ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
+						f += 1
+					cursor.close()
+					c_count += 1
+				# fin de bloque
+				virtual_wb = BytesIO()
+				wb.save(virtual_wb)
+				return virtual_wb.getvalue(), wb.mime_type,libro_nombre
+			except Exception as ex:
+				app.logger.error(ex)
+				raise ValueError('Error generando el reporte')
+		except Exception as ex:
+			app.logger.error(ex)
+			raise ValueError('Error en la conexion con la base de datos.')
+	except Exception as ex:
+		app.logger.error(ex)
+		raise ValueError('Error en la configuracion de la base de datos.')
 
 
 def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
@@ -640,151 +625,6 @@ def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD):
 		app.logger.error(ex)
 		raise ValueError('Error en la configuracion de la base de datos.')
 
-
-@app.route(context_path + '/promotores/comisiones/excel', methods=['GET'])
-def comisiones_promotor_xlsx():
-	try:
-		print("EStado de cuentas de Comisiones")
-
-		P_Clave = request.args['codigo']
-		P_Feini = request.args['desde']
-		P_Fefin = request.args['hasta']
-		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
-		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = DB_HOST
-		port = DB_PORT
-		service_name = DB_SERVICE
-		user = DB_USER
-		password = DB_PWD
-		schema = DB_SCHEMA
-		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
-		# Declaracion de cursores a utilizar
-		try:
-			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
-			try:
-				wb = opyxl.load_workbook("plantilla_promotor.xlsx")
-				ws = wb.worksheets[0]
-				ws.cell(row=1, column=6).value = "ESTADOS DE CUENTA DE COMISIONES"
-				ws.title = "Estado de Cuenta de Comisiones"
-				statement = connection.cursor()
-				has_agent = False
-				c_head = connection.cursor()
-				c1 = connection.cursor()
-				c2 = connection.cursor()
-				c3 = connection.cursor()
-				c4 = connection.cursor()
-				c5 = connection.cursor()
-				c6 = connection.cursor()
-				c7 = connection.cursor()
-				c8 = connection.cursor()
-				c9 = connection.cursor()
-				statement.execute(
-					"begin "+schema+".PKG_MUI_ESTADOS_DE_CUENTA_1.BODY_COMISIONES_PROMOTOR ( :Pb_PROMOTOR, :Pb_FEINI, :Pb_FEFIN, :c_head,:c1,:c2,:c3,:c4,:c5,:c6,:c7,:c8,:c9); end;",
-					c_head=c_head, c1=c1, c2=c2, c3=c3, c4=c4, c5=c5, c6=c6, c7=c7, c8=c8, c9=c9,
-					Pb_PROMOTOR=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
-				libro_nombre = P_Clave + "_" + P_Feini.replace("/", "") + "_" + P_Fefin.replace("/",
-																								"") + '_comisiones.xlsx'
-				for row in c_head:
-					has_agent = True
-					for i in range(0, len(row) - 4):
-						ws.cell(row=4 + i, column=9).value = row[i]
-					for i in range(len(row) - 4, len(row)):
-						ws.cell(row=i, column=4).value = row[i]
-				if not has_agent:
-					statement.close()
-					c_head.close()
-					c1.close()
-					c2.close()
-					c3.close()
-					c4.close()
-					c5.close()
-					c6.close()
-					c7.close()
-					c8.close()
-					c9.close()
-					return make_response(jsonify(succes=False, message="Codigo de promotor no encontrado"), 400)
-				c_head.close()
-				f = 13 #principal gestor de filas del archivo
-				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
-				# NUEVO BLOQUE SECUENCIAL
-				cursores = []
-				cursores.append(c1)
-				cursores.append(c2)
-				cursores.append(c3)
-				cursores.append(c4)
-				cursores.append(c5)
-				cursores.append(c6)
-				cursores.append(c7)
-				cursores.append(c8)
-				cursores.append(c9)
-				c_count = 1
-				for cursor in cursores:
-					lista = getHeadColumnsComisones("excel", c_count)
-					alphabet_string = string.ascii_uppercase
-					alphabet_list = list(alphabet_string)
-					ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count)
-					ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-					f += 1
-					j = 0
-					for item in lista:
-						ws.cell(row=f, column=j + 1).value = item
-						ws.cell(row=f, column=j + 1).fill = greyFill
-						ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-						ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-						columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-						multiplicador = 2
-						lista_columnas_esp = ['A', 'B', 'C', 'H']
-						ancho = len(item)
-						if len(item) <= 6:
-							ancho *= 2
-						if len(item) > 6 or columna == 'A':
-							ancho *= 1.1
-						if columna in lista_columnas_esp:
-							ancho = 25
-						if c_count == 5:
-							ws.column_dimensions[columna].width = ancho
-						j += 1
-					j = 0
-					k = 0
-					f += 1
-					for row in cursor:
-						for i in range(0, len(row)):
-							valor = row[i]
-							ws.cell(row=f, column=i + 1).value = valor
-							ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-							if len(str(valor)) > 17:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-								if len(str(valor)) > 25:
-									ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
-						f += 1
-					cursor.close()
-					c_count += 1
-				# fin de bloque
-				statement.close()
-			# fin de bloque
-			except Exception as ex:
-				app.logger.error(ex)
-				statement.close()
-				c_head.close()
-				c1.close()
-				c2.close()
-				c3.close()
-				c4.close()
-				c5.close()
-				c6.close()
-				c7.close()
-				c8.close()
-				c9.close()
-		except Exception as ex:
-			app.logger.error(ex)
-		print("\nTermina Proceso " + time.strftime("%X"))
-
-		virtual_wb = BytesIO()
-		wb.save(virtual_wb)
-		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
-	except Exception as ex:
-		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
 
 
 def getHeadColumns(extension):
