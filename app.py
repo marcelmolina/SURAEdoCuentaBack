@@ -80,123 +80,19 @@ def periodo():
 
 @app.route(context_path + '/agentes/bonos/excel', methods=['GET'])
 def bono_agente_xlsx():
+	P_Clave = request.args['codigo']
+	P_Feini = request.args['desde']
+	P_Fefin = request.args['hasta']
+	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
+	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		print("""
-
-					\  \      __             __             _                  /  /
-					 >  >    |_  _| _       /  _|_ _       |_) _ __  _  _     <  < 
-					/  /     |__(_|(_) o    \__ |_(_| o    |_)(_)| |(_)_>      \  \ 
-
-					""")
-
-		P_Clave = request.args['codigo']
-		P_Feini = request.args['desde']
-		P_Fefin = request.args['hasta']
-		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
-		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = DB_HOST
-		port = DB_PORT
-		service_name = DB_SERVICE
-		user = DB_USER
-		password = DB_PWD
-		schema = DB_SCHEMA
-		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
-		# Declaracion de cursores a utilizar
-		try:
-			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
-			try:
-				wb = opyxl.load_workbook("plantilla_agentes.xlsx")
-				ws = wb.worksheets[0]
-				cursors = []
-				for times in range(2):
-					cursor = connection.cursor()
-					query = getquery('A','BONO',times,P_Clave,P_Feini,P_Fefin)
-					cursor.execute(query)
-					cursors.append(cursor)
-
-				libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.xlsx'
-				for row in cursors[0]:
-					has_agent = True
-					for i in range(0, len(row) - 4):
-						ws.cell(row=4 + i, column=9).value = row[i]
-					for i in range(len(row) - 4, len(row)):
-						ws.cell(row=i, column=4).value = row[i]
-				cursors[0].close()
-				if not has_agent:
-					return make_response(jsonify(succes=False, message="Codigo de agente no encontrado"), 400)
-
-				j = 0
-				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
-				lista = getHeadColumns("excel")
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				for item in lista:
-					ws.cell(row=13, column=j + 1).value = item
-					ws.cell(row=13, column=j + 1).fill = greyFill
-					ws.cell(row=13, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=13, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=13, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				has_data = False
-				for row in cursors[1]:
-					has_data = True
-					lista_razones = []
-					for i in range(0, len(row)):
-
-						if i < 21:
-							aux = 0
-							if i >=9:
-								aux=1
-							valor = row[i]
-							if i == 2:
-								valor = getTipoSubBono(row[i])
-							ws.cell(row=14 + j, column=i + 1+aux).value = valor
-							ws.cell(row=14 + j, column=i + 1+aux).alignment = Alignment(horizontal="center",vertical="center")
-							if len(str(valor)) > 17:
-								ws.cell(row=14 + j, column=i + 1+aux).font = Font(name='Arial', size=8)
-								if len(str(valor)) > 25:
-									ws.cell(row=14 + j, column=i + 1+aux).font = Font(name='Arial', size=7)
-						else:
-							if i == 21:
-								if row[i] == 'NO':
-									ws.cell(row=14 + j, column=10).value = 'Sí'
-								else:
-									ws.cell(row=14 + j, column=10).value = 'No'
-							if i > 21 and row[21] == 'SI':
-								if row[i] is not None and len(row[i]) > 0:
-									lista_razones.append(row[i])
-					if row[21] == 'SI' and len(lista_razones) > 0:
-						ws.cell(row=14 + j, column=11).value = ", ".join(lista_razones)
-					if row[21] == 'NO':
-						ws.cell(row=14 + j, column=11).value = ' '
-					j += 1
-				cursors[1].close()
-				if not has_data:
-					return make_response(jsonify(succes=False, message="Codigo de agente no retorna data en esas fechas"), 400)
-			except Exception as ex:
-				app.logger.error(ex)
-		except Exception as ex:
-			app.logger.error(ex)
-		print("\nTermina Proceso " + time.strftime("%X"))
-
-		virtual_wb = BytesIO()
-		wb.save(virtual_wb)
-		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
+		file, filemime, filename = bonos_xlx(P_Clave, P_Feini, P_Fefin, 'A')
+		return Response(file, mimetype=filemime,
+						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
+		return make_response(jsonify(succes=False, message=ex), 400)
+
 
 @app.route(context_path + '/agentes/bonos/pdf', methods=['GET'])
 def bono_agente_pdf():
@@ -377,125 +273,18 @@ def comisiones_agente_xlsx():
 
 @app.route(context_path + '/promotores/bonos/excel', methods=['GET'])
 def bono_promotores_xlsx():
+	P_Clave = request.args['codigo']
+	P_Feini = request.args['desde']
+	P_Fefin = request.args['hasta']
+	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
+	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		print("""
-
-					\  \      __             __             _                  /  /
-					 >  >    |_  _| _       /  _|_ _       |_) _ __  _  _     <  < 
-					/  /     |__(_|(_) o    \__ |_(_| o    |_)(_)| |(_)_>      \  \ 
-
-					""")
-
-		P_Clave = request.args['codigo']
-		P_Feini = request.args['desde']
-		P_Fefin = request.args['hasta']
-		P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
-		P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
-		host = DB_HOST
-		port = DB_PORT
-		service_name = DB_SERVICE
-		user = DB_USER
-		password = DB_PWD
-		schema = DB_SCHEMA
-		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
-		# Declaracion de cursores a utilizar
-		try:
-			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
-			try:
-				wb = opyxl.load_workbook("plantilla_promotor.xlsx")
-				ws = wb.worksheets[0]
-				has_agent = False
-				libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.xlsx'
-				cursors = []
-				for times in range(2):
-					cursor = connection.cursor()
-					query = getquery('P', 'BONO', times, P_Clave, P_Feini, P_Fefin)
-					cursor.execute(query)
-					cursors.append(cursor)
-
-				for row in cursors[0]:
-					has_agent = True
-					for i in range(0, len(row) - 4):
-						ws.cell(row=4 + i, column=9).value = row[i]
-					for i in range(len(row) - 4, len(row)):
-						ws.cell(row=i, column=4).value = row[i]
-
-				cursors[0].close()
-				if not has_agent:
-					return make_response(jsonify(succes=False, message="Codigo de promotor no encontrado"), 400)
-
-				j = 0
-				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
-				lista = getHeadColumns("excel")
-				alphabet_string = string.ascii_uppercase
-				alphabet_list = list(alphabet_string)
-				for item in lista:
-					ws.cell(row=13, column=j + 1).value = item
-					ws.cell(row=13, column=j + 1).fill = greyFill
-					ws.cell(row=13, column=j + 1).font = Font(name='Arial', size=9, bold=True)
-					ws.cell(row=13, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-					columna = alphabet_list[ws.cell(row=13, column=j + 1).column - 1]
-					multiplicador = 2
-					lista_columnas_esp = ['B', 'G']
-					ancho = len(item)
-					if len(item) <= 6:
-						ancho *= 2
-					if len(item) > 6 or columna == 'A':
-						ancho *= 1.1
-					if columna in lista_columnas_esp:
-						ancho = 25
-					ws.column_dimensions[columna].width = ancho
-					j += 1
-				j = 0
-				k = 0
-				has_data = False
-				for row in cursors[1]:
-					has_data = True
-					lista_razones = []
-					for i in range(0, len(row)):
-
-						if i < 21:
-							aux = 0
-							if i >=9:
-								aux=1
-							valor = row[i]
-							if i ==2:
-								valor = getTipoSubBono(valor)
-							ws.cell(row=14 + j, column=i + 1+aux).value = valor
-							ws.cell(row=14 + j, column=i + 1+aux).alignment = Alignment(horizontal="center",vertical="center")
-							if len(str(valor)) > 17:
-								ws.cell(row=14 + j, column=i + 1+aux).font = Font(name='Arial', size=8)
-								if len(str(valor)) > 25:
-									ws.cell(row=14 + j, column=i + 1+aux).font = Font(name='Arial', size=7)
-						else:
-							if i == 21:
-								if row[i] == 'NO':
-									ws.cell(row=14 + j, column=10).value = 'Sí'
-								else:
-									ws.cell(row=14 + j, column=10).value = 'No'
-							if i > 21 and row[21] == 'SI':
-								if row[i] is not None and len(row[i]) > 0:
-									lista_razones.append(row[i])
-					if row[21] == 'SI' and len(lista_razones) > 0:
-						ws.cell(row=14 + j, column=11).value = ", ".join(lista_razones)
-					if row[21] == 'NO':
-						ws.cell(row=14 + j, column=11).value = ' '
-					j += 1
-				cursors[1].close()
-				if not has_data:
-					return make_response(jsonify(succes=False, message="Codigo de promotor no retorna data en esas fechas"), 400)
-			except Exception as ex:
-				app.logger.error(ex)
-		except Exception as ex:
-			app.logger.error(ex)
-		print("\nTermina Proceso " + time.strftime("%X"))
-
-		virtual_wb = BytesIO()
-		wb.save(virtual_wb)
-		return Response(virtual_wb.getvalue(), mimetype=wb.mime_type,headers={"Content-Disposition": "attachment;filename="+libro_nombre})
+		file, filemime, filename = bonos_xlx(P_Clave, P_Feini, P_Fefin, 'P')
+		return Response(file, mimetype=filemime,
+						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message="Error en la generacion del archivo"),400)
+		return make_response(jsonify(succes=False, message=ex), 400)
 
 @app.route(context_path + '/promotores/bonos/pdf', methods=['GET'])
 def bono_promotores_pdf():
@@ -561,7 +350,7 @@ def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 					for i in range(0, len(row)):
 						lista_aux.append(row[i])
 				if not has_agent:
-					raise ValueError('Codigo de agente no encontrado')
+					raise ValueError('Identificador no encontrado')
 				header_all = getheaderpdf(P_COD,lista_aux,'COMISIONES')
 				grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
 				tbl = Table(header_all)
@@ -692,7 +481,7 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 						lista_aux.append(row[i])
 				cursors[0].close
 				if not has_agent:
-					raise ValueError('Codigo de agente no encontrado')
+					raise ValueError('Identificador no encontrado')
 				header_all = getheaderpdf(P_COD,lista_aux,'BONOS')
 				grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
 				tbl = Table(header_all)
@@ -733,6 +522,123 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 	except Exception as ex:
 		app.logger.error(ex)
 		raise ValueError('Error de configuracion de base de datos.')
+
+
+def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD):
+	try:
+		print("""
+
+					\  \      __             __             _                  /  /
+					 >  >    |_  _| _       /  _|_ _       |_) _ __  _  _     <  < 
+					/  /     |__(_|(_) o    \__ |_(_| o    |_)(_)| |(_)_>      \  \ 
+
+					""")
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
+		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
+		# Declaracion de cursores a utilizar
+		try:
+			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
+			try:
+				plantilla = "plantilla_agentes.xlsx"
+				if P_COD == 'P':
+					plantilla = "plantilla_promotor.xlsx"
+				wb = opyxl.load_workbook(plantilla)
+				ws = wb.worksheets[0]
+				cursors = []
+				for times in range(2):
+					cursor = connection.cursor()
+					query = getquery(P_COD,'BONO',times,P_Clave,P_Feini,P_Fefin)
+					cursor.execute(query)
+					cursors.append(cursor)
+
+				libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.xlsx'
+				for row in cursors[0]:
+					has_agent = True
+					for i in range(0, len(row) - 4):
+						ws.cell(row=4 + i, column=9).value = row[i]
+					for i in range(len(row) - 4, len(row)):
+						ws.cell(row=i, column=4).value = row[i]
+				cursors[0].close()
+				if not has_agent:
+					raise ValueError('Identificador no encontrado')
+				j = 0
+				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
+				lista = getHeadColumns("excel")
+				alphabet_string = string.ascii_uppercase
+				alphabet_list = list(alphabet_string)
+				for item in lista:
+					ws.cell(row=13, column=j + 1).value = item
+					ws.cell(row=13, column=j + 1).fill = greyFill
+					ws.cell(row=13, column=j + 1).font = Font(name='Arial', size=9, bold=True)
+					ws.cell(row=13, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
+					columna = alphabet_list[ws.cell(row=13, column=j + 1).column - 1]
+					multiplicador = 2
+					lista_columnas_esp = ['B', 'G']
+					ancho = len(item)
+					if len(item) <= 6:
+						ancho *= 2
+					if len(item) > 6 or columna == 'A':
+						ancho *= 1.1
+					if columna in lista_columnas_esp:
+						ancho = 25
+					ws.column_dimensions[columna].width = ancho
+					j += 1
+				j = 0
+				k = 0
+				has_data = False
+				for row in cursors[1]:
+					has_data = True
+					lista_razones = []
+					for i in range(0, len(row)):
+
+						if i < 21:
+							aux = 0
+							if i >=9:
+								aux=1
+							valor = row[i]
+							if i == 2:
+								valor = getTipoSubBono(row[i])
+							ws.cell(row=14 + j, column=i + 1+aux).value = valor
+							ws.cell(row=14 + j, column=i + 1+aux).alignment = Alignment(horizontal="center",vertical="center")
+							if len(str(valor)) > 17:
+								ws.cell(row=14 + j, column=i + 1+aux).font = Font(name='Arial', size=8)
+								if len(str(valor)) > 25:
+									ws.cell(row=14 + j, column=i + 1+aux).font = Font(name='Arial', size=7)
+						else:
+							if i == 21:
+								if row[i] == 'NO':
+									ws.cell(row=14 + j, column=10).value = 'Sí'
+								else:
+									ws.cell(row=14 + j, column=10).value = 'No'
+							if i > 21 and row[21] == 'SI':
+								if row[i] is not None and len(row[i]) > 0:
+									lista_razones.append(row[i])
+					if row[21] == 'SI' and len(lista_razones) > 0:
+						ws.cell(row=14 + j, column=11).value = ", ".join(lista_razones)
+					if row[21] == 'NO':
+						ws.cell(row=14 + j, column=11).value = ' '
+					j += 1
+				cursors[1].close()
+				if not has_data:
+					raise ValueError('Error en la generacion del reporte.')
+				virtual_wb = BytesIO()
+				wb.save(virtual_wb)
+				return virtual_wb.getvalue(),wb.mime_type,libro_nombre
+			except Exception as ex:
+				app.logger.error(ex)
+				raise ValueError('Error en la generacion del reporte.')
+		except Exception as ex:
+			app.logger.error(ex)
+			raise ValueError('Error en la conexion con la base de datos.')
+		print("\nTermina Proceso " + time.strftime("%X"))
+	except Exception as ex:
+		app.logger.error(ex)
+		raise ValueError('Error en la configuracion de la base de datos.')
 
 
 @app.route(context_path + '/promotores/comisiones/excel', methods=['GET'])
