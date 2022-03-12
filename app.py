@@ -241,7 +241,8 @@ def comisiones_promotores_pdf():
 
 def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
 	try:
-		print("Estado de cuentas de Comisiones")
+		print("Estado de cuentas de Comisiones XLSX")
+		app.logger.info("Entrando a Estado de cuentas de Comisiones XLSX ("+P_COD+")")
 		host = DB_HOST
 		port = DB_PORT
 		service_name = DB_SERVICE
@@ -253,21 +254,26 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
 		try:
 			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
 			try:
+				app.logger.info("Conectado a la base de datos.")
 				libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.xlsx'
 				plantilla = "plantilla_agentes.xlsx"
 				if P_COD == 'P':
 					plantilla = "plantilla_promotor.xlsx"
 				wb = opyxl.load_workbook(plantilla)
+				app.logger.info("Cargado archivo de plantilla xlsx.")
 				ws = wb.worksheets[0]
 				ws.cell(row=1, column=6).value = "ESTADOS DE CUENTA DE COMISIONES"
 				ws.title = "Estado de Cuenta de Comisiones"
 				cursors = []
+				app.logger.info("Iniciando carga de cursores")
 				for times in range(13):
 					cursor = connection.cursor()
 					query = getquery(P_COD, 'COMISION', times, P_Clave, P_Feini, P_Fefin)
 					cursor.execute(query)
+					app.logger.info(f"Cargado cursor -> ({times})")
 					cursors.append(cursor)
 				has_agent = False
+				app.logger.info("Leyendo cursor de cabecera")
 				for row in cursors[0]:
 					has_agent = True
 					for i in range(0, len(row) - 4):
@@ -275,6 +281,7 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
 					for i in range(len(row) - 4, len(row)):
 						ws.cell(row=i, column=4).value = row[i]
 				if not has_agent:
+					app.logger.error("La cabecera volvio vacia.")
 					return False,'Identificador no encontrado',0,0
 				del cursors[0]
 				f = 13  # principal gestor de filas del archivo
@@ -282,6 +289,7 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
 				# NUEVO BLOQUE SECUENCIAL
 				c_count = 1
 				for cursor in cursors:
+					app.logger.info(f"Leyendo cursor -> ({c_count})")
 					fila_totales = [0, 0, 0, 0, 0]
 					lista = getHeadColumnsComisones("excel", c_count)
 					alphabet_string = string.ascii_uppercase
@@ -376,6 +384,7 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
 					c_count += 1
 				# fin de bloque
 				virtual_wb = BytesIO()
+				app.logger.info("Construyendo reporte xlsx.")
 				wb.save(virtual_wb)
 				return True,"",virtual_wb.getvalue(), wb.mime_type,libro_nombre
 			except Exception as ex:
@@ -391,7 +400,8 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
 
 def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 	try:
-		print("Estado de cuentas comisiones")
+		print("Estado de cuentas de Comisiones PDF")
+		app.logger.info("Entrando a Estado de cuentas de Comisiones PDF (" + P_COD + ")")
 		host = DB_HOST
 		port = DB_PORT
 		service_name = DB_SERVICE
@@ -403,24 +413,29 @@ def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 		try:
 			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
 			try:
+				app.logger.info("Conectado a la base de datos.")
 				has_agent = False
 				cursors = []
+				app.logger.info("Iniciando carga de cursores")
 				for times in range(13):
 					cursor = connection.cursor()
 					query = getquery(P_COD, 'COMISION', times, P_Clave, P_Feini, P_Fefin)
 					cursor.execute(query)
+					app.logger.info(f"Cargado cursor -> ({times})")
 					cursors.append(cursor)
 				libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.pdf'
 
 				virtual_wb = BytesIO()
 				doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((432*mm, 546*mm)))
 				flowables = []
+				app.logger.info("Leyendo cursor de cabecera")
 				for row in cursors[0]:
 					has_agent = True
 					lista_aux = []
 					for i in range(0, len(row)):
 						lista_aux.append(row[i])
 				if not has_agent:
+					app.logger.error("La cabecera volvio vacia.")
 					return False, 'Identificador no encontrado', 0, 0,0
 				header_all = getheaderpdf(P_COD,lista_aux,'COMISIONES')
 				grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
@@ -433,6 +448,7 @@ def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 					[('GRID', (0, 0), (0, 0), 0.25, colors.gray), ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
 					 ('FONTSIZE', (0, 0), (0, 0), 7)])
 				for cursor in cursors:
+					app.logger.info(f"Leyendo cursor -> ({c_count})")
 					lista = getHeadColumnsComisones("pdf", c_count)
 					data_cursor = []
 					taux = Table([("", getTableNamesComisiones(c_count), ""), ("", "", "")])
@@ -498,6 +514,7 @@ def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 					c_count += 1
 					cursor.close()
 				# fin de bloque
+				app.logger.info("Construyendo reporte pdf.")
 				doc.build(flowables)
 				return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
 			except Exception as ex:
@@ -513,14 +530,8 @@ def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 
 def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 	try:
-		print("""
-
-					\  \      __             __             _                  /  /
-					 >  >    |_  _| _       /  _|_ _       |_) _ __  _  _     <  < 
-					/  /     |__(_|(_) o    \__ |_(_| o    |_)(_)| |(_)_>      \  \ 
-
-					""")
-
+		print("Estado de cuentas de Bonos")
+		app.logger.info("Entrando a Estado de cuentas de Bonos PDF (" + P_COD + ")")
 		host = DB_HOST
 		port = DB_PORT
 		service_name = DB_SERVICE
@@ -532,19 +543,22 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 		try:
 			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
 			try:
+				app.logger.info("Conectado a la base de datos.")
 				has_agent = False
 				cursors = []
+				app.logger.info("Iniciando carga de cursores")
 				for times in range(2):
 					cursor = connection.cursor()
 					query = getquery(P_COD, 'BONO', times, P_Clave, P_Feini, P_Fefin)
 					cursor.execute(query)
+					app.logger.info(f"Cargado cursor -> ({times})")
 					cursors.append(cursor)
 
 				virtual_wb = BytesIO()
 				doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((432*mm, 546*mm)))
 				flowables = []
 				libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.pdf'
-
+				app.logger.info("Leyendo cursor de cabecera")
 				for row in cursors[0]:
 					has_agent = True
 					lista_aux = []
@@ -552,6 +566,7 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 						lista_aux.append(row[i])
 				cursors[0].close
 				if not has_agent:
+					app.logger.error("La cabecera volvio vacia.")
 					return False, 'Identificador no encontrado', 0, 0,0
 				header_all = getheaderpdf(P_COD,lista_aux,'BONOS')
 				grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
@@ -567,6 +582,7 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 				for item in lista:
 					lista_aux.append(item)
 				data_body.append(lista_aux)
+				app.logger.info("Leyendo cursor -> (1)")
 				for row in cursors[1]:
 					has_data=True
 					lista_aux = []
@@ -579,11 +595,14 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 					data_body.append(lista_aux)
 				cursors[1].close()
 				if not has_data:
+					app.logger.error("La tabla de detalle volvio vacia.")
 					return False, 'Error generando el reporte.', 0, 0,0
 				tbl = Table(data_body)
 				tblstyle = TableStyle([('GRID',(0,0),(0,0),0.25,colors.gray),('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),('FONTSIZE', (0, 0), (0, 0), 7)])
 				tbl.setStyle(tblstyle)
 				flowables.append(tbl)
+
+				app.logger.info("Construyendo reporte pdf.")
 				doc.build(flowables)
 				return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
 			except Exception as ex:
@@ -597,13 +616,8 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 
 def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD):
 	try:
-		print("""
-
-					\  \      __             __             _                  /  /
-					 >  >    |_  _| _       /  _|_ _       |_) _ __  _  _     <  < 
-					/  /     |__(_|(_) o    \__ |_(_| o    |_)(_)| |(_)_>      \  \ 
-
-					""")
+		print("Estado de cuentas de Bonos XLSX")
+		app.logger.info("Entrando a Estado de cuentas de Bonos XLSX (" + P_COD + ")")
 		host = DB_HOST
 		port = DB_PORT
 		service_name = DB_SERVICE
@@ -615,19 +629,24 @@ def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD):
 		try:
 			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
 			try:
+				app.logger.info("Conectado a la base de datos.")
 				plantilla = "plantilla_agentes.xlsx"
 				if P_COD == 'P':
 					plantilla = "plantilla_promotor.xlsx"
 				wb = opyxl.load_workbook(plantilla)
+				app.logger.info("Cargado archivo de plantilla xlsx.")
 				ws = wb.worksheets[0]
 				cursors = []
+				app.logger.info("Iniciando carga de cursores")
 				for times in range(2):
 					cursor = connection.cursor()
 					query = getquery(P_COD,'BONO',times,P_Clave,P_Feini,P_Fefin)
 					cursor.execute(query)
+					app.logger.info(f"Cargado cursor -> ({times})")
 					cursors.append(cursor)
 
 				libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.xlsx'
+				app.logger.info("Leyendo cursor de cabecera")
 				for row in cursors[0]:
 					has_agent = True
 					for i in range(0, len(row) - 4):
@@ -636,6 +655,7 @@ def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD):
 						ws.cell(row=i, column=4).value = row[i]
 				cursors[0].close()
 				if not has_agent:
+					app.logger.error("La cabecera volvio vacia.")
 					return False, 'Identificador no encontrado.', 0, 0,0
 				j = 0
 				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
@@ -662,6 +682,7 @@ def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD):
 				j = 0
 				k = 0
 				has_data = False
+				app.logger.info("Leyendo cursor -> (1)")
 				for row in cursors[1]:
 					has_data = True
 					lista_razones = []
@@ -696,8 +717,10 @@ def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD):
 					j += 1
 				cursors[1].close()
 				if not has_data:
+					app.logger.error("La tabla de detalle volvio vacia.")
 					return False, 'Error en la generacion del reporte.', 0, 0,0
 				virtual_wb = BytesIO()
+				app.logger.info("Construyendo reporte xlsx.")
 				wb.save(virtual_wb)
 				return True,"",virtual_wb.getvalue(),wb.mime_type,libro_nombre
 			except Exception as ex:
