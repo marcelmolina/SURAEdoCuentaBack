@@ -85,7 +85,7 @@ def periodo():
 			return make_response(jsonify(succes=False, message="Error en la busqueda de fechas."), 400)
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message="Error en la busqueda de fechas."), 400)
+		return make_response(jsonify(succes=False, message="Error en la conexion con la base de datos."), 400)
 
 
 @app.route(context_path + '/agentes/bonos/excel', methods=['GET'])
@@ -96,12 +96,15 @@ def bono_agente_xlsx():
 	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		file, filemime, filename = bonos_xlx(P_Clave, P_Feini, P_Fefin, 'A')
+		estado,mensaje,file, filemime, filename = bonos_xlx(P_Clave, P_Feini, P_Fefin, 'A')
+
+		if not estado:
+			return make_response(jsonify(succes=False, message=mensaje), 400)
 		return Response(file, mimetype=filemime,
 						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message=ex), 400)
+		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
 
 
 @app.route(context_path + '/agentes/bonos/pdf', methods=['GET'])
@@ -112,12 +115,15 @@ def bono_agente_pdf():
 	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		file, filename = bonos_pdf(P_Clave, P_Feini, P_Fefin, 'A')
-		return Response(file, mimetype="application/pdf",
+		estado,mensaje,file, filemime, filename = bonos_pdf(P_Clave, P_Feini, P_Fefin, 'A')
+
+		if not estado:
+			return make_response(jsonify(succes=False, message=mensaje), 400)
+		return Response(file, mimetype=filemime,
 						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message=ex), 400)
+		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
 
 
 @app.route(context_path + '/agentes/comisiones/pdf', methods=['GET'])
@@ -128,12 +134,15 @@ def comisiones_agente_pdf():
 	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		file, filename = comisiones_pdf(P_Clave, P_Feini, P_Fefin, 'A')
-		return Response(file, mimetype="application/pdf",
+		estado,mensaje,file, filemime, filename = comisiones_pdf(P_Clave, P_Feini, P_Fefin, 'A')
+
+		if not estado:
+			return make_response(jsonify(succes=False, message=mensaje), 400)
+		return Response(file, mimetype=filemime,
 						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message=ex), 400)
+		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
 
 
 @app.route(context_path + '/agentes/comisiones/excel', methods=['GET'])
@@ -144,12 +153,15 @@ def comisiones_agente_xlsx():
 	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		file, filemime, filename = comisiones_xlsx(P_Clave, P_Feini, P_Fefin, 'A')
+		estado,mensaje,file, filemime, filename = comisiones_xlsx(P_Clave, P_Feini, P_Fefin, 'A')
+
+		if not estado:
+			return make_response(jsonify(succes=False, message=mensaje), 400)
 		return Response(file, mimetype=filemime,
 						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message=ex), 400)
+		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
 
 
 @app.route(context_path + '/promotores/bonos/excel', methods=['GET'])
@@ -160,12 +172,15 @@ def bono_promotores_xlsx():
 	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		file, filemime, filename = bonos_xlx(P_Clave, P_Feini, P_Fefin, 'P')
+		estado,mensaje,file, filemime, filename = bonos_xlx(P_Clave, P_Feini, P_Fefin, 'P')
+
+		if not estado:
+			return make_response(jsonify(succes=False, message=mensaje), 400)
 		return Response(file, mimetype=filemime,
 						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message=ex), 400)
+		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
 
 @app.route(context_path + '/promotores/bonos/pdf', methods=['GET'])
 def bono_promotores_pdf():
@@ -175,12 +190,15 @@ def bono_promotores_pdf():
 	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		file, filename = bonos_pdf(P_Clave, P_Feini, P_Fefin, 'P')
-		return Response(file, mimetype="application/pdf",
+		estado,mensaje,file, filemime, filename = bonos_pdf(P_Clave, P_Feini, P_Fefin, 'P')
+
+		if not estado:
+			return make_response(jsonify(succes=False, message=mensaje), 400)
+		return Response(file, mimetype=filemime,
 						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message=ex), 400)
+		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
 
 
 @app.route(context_path + '/promotores/comisiones/excel', methods=['GET'])
@@ -191,12 +209,15 @@ def comisiones_promotor_xlsx():
 	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		file, filemime, filename = comisiones_xlsx(P_Clave, P_Feini, P_Fefin, 'P')
+		estado,mensaje,file, filemime, filename = comisiones_xlsx(P_Clave, P_Feini, P_Fefin, 'P')
+
+		if not estado:
+			return make_response(jsonify(succes=False, message=mensaje), 400)
 		return Response(file, mimetype=filemime,
 						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message=ex), 400)
+		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
 
 
 @app.route(context_path + '/promotores/comisiones/pdf', methods=['GET'])
@@ -207,12 +228,15 @@ def comisiones_promotores_pdf():
 	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		file,filename=comisiones_pdf(P_Clave,P_Feini,P_Fefin,'P')
-		return Response(file, mimetype="application/pdf",
+		estado,mensaje,file, filemime, filename=comisiones_pdf(P_Clave,P_Feini,P_Fefin,'P')
+
+		if not estado:
+			return make_response(jsonify(succes=False, message=mensaje), 400)
+		return Response(file, mimetype=filemime,
 						headers={"Content-Disposition": "attachment;filename=" + filename})
 	except Exception as ex:
 		app.logger.error(ex)
-		return make_response(jsonify(succes=False, message=ex), 400)
+		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
 
 
 def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
@@ -251,7 +275,7 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
 					for i in range(len(row) - 4, len(row)):
 						ws.cell(row=i, column=4).value = row[i]
 				if not has_agent:
-					raise ValueError('Identificador no encontrado')
+					return False,'Identificador no encontrado',0,0
 				del cursors[0]
 				f = 13  # principal gestor de filas del archivo
 				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
@@ -353,16 +377,16 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD):
 				# fin de bloque
 				virtual_wb = BytesIO()
 				wb.save(virtual_wb)
-				return virtual_wb.getvalue(), wb.mime_type,libro_nombre
+				return True,"",virtual_wb.getvalue(), wb.mime_type,libro_nombre
 			except Exception as ex:
 				app.logger.error(ex)
-				raise ValueError('Error generando el reporte')
+				return False, 'Error generando el reporte', 0, 0,0
 		except Exception as ex:
 			app.logger.error(ex)
-			raise ValueError('Error en la conexion con la base de datos.')
+			return False, 'Error en la conexion con la base de datos.', 0, 0,0
 	except Exception as ex:
 		app.logger.error(ex)
-		raise ValueError('Error en la configuracion de la base de datos.')
+		return False, 'Error en la configuracion de la base de datos.', 0, 0,0
 
 
 def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
@@ -397,7 +421,7 @@ def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 					for i in range(0, len(row)):
 						lista_aux.append(row[i])
 				if not has_agent:
-					raise ValueError('Identificador no encontrado')
+					return False, 'Identificador no encontrado', 0, 0,0
 				header_all = getheaderpdf(P_COD,lista_aux,'COMISIONES')
 				grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
 				tbl = Table(header_all)
@@ -475,16 +499,16 @@ def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 					cursor.close()
 				# fin de bloque
 				doc.build(flowables)
-				return virtual_wb.getvalue(), libro_nombre
+				return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
 			except Exception as ex:
 				app.logger.error(ex)
-				raise ValueError('Error en la generacion del reporte.')
+				return False, 'Error en la generacion del reporte.', 0, 0,0
 		except Exception as ex:
 			app.logger.error(ex)
-			raise ValueError('Error en la conexion con la base de datos.')
+			return False, 'Error en la conexion con la base de datos.', 0, 0,0
 	except Exception as ex:
 		app.logger.error(ex)
-		raise ValueError('Error en la configuracion de la base de datos.')
+		return False, 'Error en la configuracion de la base de datos.', 0, 0,0
 
 
 def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
@@ -528,7 +552,7 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 						lista_aux.append(row[i])
 				cursors[0].close
 				if not has_agent:
-					raise ValueError('Identificador no encontrado')
+					return False, 'Identificador no encontrado', 0, 0,0
 				header_all = getheaderpdf(P_COD,lista_aux,'BONOS')
 				grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
 				tbl = Table(header_all)
@@ -555,20 +579,20 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD):
 					data_body.append(lista_aux)
 				cursors[1].close()
 				if not has_data:
-					raise ValueError('Error generando el reporte.')
+					return False, 'Error generando el reporte.', 0, 0,0
 				tbl = Table(data_body)
 				tblstyle = TableStyle([('GRID',(0,0),(0,0),0.25,colors.gray),('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),('FONTSIZE', (0, 0), (0, 0), 7)])
 				tbl.setStyle(tblstyle)
 				flowables.append(tbl)
 				doc.build(flowables)
-				return virtual_wb.getvalue(), libro_nombre
+				return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
 			except Exception as ex:
-				raise ValueError('Error generando el reporte.')
+				return False, 'Error generando el reporte.', 0, 0,0
 		except Exception as ex:
-			raise ValueError('Error de conexion con la base de datos.')
+			return False, 'Error de conexion con la base de datos.', 0, 0,0
 	except Exception as ex:
 		app.logger.error(ex)
-		raise ValueError('Error de configuracion de base de datos.')
+		return False, 'Error de configuracion de base de datos.', 0, 0,0
 
 
 def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD):
@@ -612,7 +636,7 @@ def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD):
 						ws.cell(row=i, column=4).value = row[i]
 				cursors[0].close()
 				if not has_agent:
-					raise ValueError('Identificador no encontrado')
+					return False, 'Identificador no encontrado.', 0, 0,0
 				j = 0
 				greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
 				lista = getHeadColumns("excel")
@@ -672,20 +696,20 @@ def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD):
 					j += 1
 				cursors[1].close()
 				if not has_data:
-					raise ValueError('Error en la generacion del reporte.')
+					return False, 'Error en la generacion del reporte.', 0, 0,0
 				virtual_wb = BytesIO()
 				wb.save(virtual_wb)
-				return virtual_wb.getvalue(),wb.mime_type,libro_nombre
+				return True,"",virtual_wb.getvalue(),wb.mime_type,libro_nombre
 			except Exception as ex:
 				app.logger.error(ex)
-				raise ValueError('Error en la generacion del reporte.')
+				return False, 'Error en la generacion del reporte.', 0, 0,0
 		except Exception as ex:
 			app.logger.error(ex)
-			raise ValueError('Error en la conexion con la base de datos.')
+			return False, 'Error de conexion con la base de datos.', 0, 0,0
 		print("\nTermina Proceso " + time.strftime("%X"))
 	except Exception as ex:
 		app.logger.error(ex)
-		raise ValueError('Error en la configuracion de la base de datos.')
+		return False, 'Error de configuracion de base de datos.', 0, 0,0
 
 
 
