@@ -45,6 +45,9 @@ def periodo():
 	P_MES = request.args['mes']
 	P_ANIO = request.args['anio']
 	P_CLAVE = request.args['clave']
+	tabla = "TSIA_MOVAGEN"
+	if P_CLAVE == 'P':
+		tabla = "TSIA_MOVPROM"
 	host = DB_HOST
 	port = DB_PORT
 	service_name = DB_SERVICE
@@ -56,22 +59,29 @@ def periodo():
 	try:
 		connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
 		try:
-			statement = connection.cursor()
+			entro=False
+			P_Fefin=""
+			P_Feini=""
+			query1 = f"SELECT MAX(femovimi)-1 FROM {tabla} WHERE cdconc = 'SA' AND TO_CHAR(femovimi,'MMYYYY') = LPAD('{P_MES}',2,'0')||'{P_ANIO}'"
 			cur1 = connection.cursor()
-			cur2 = connection.cursor()
-			v_desde = cur1.var(cx_Oracle.Date)
-			v_hasta = cur2.var(cx_Oracle.Date)
-			statement.execute(
-				"begin " + schema + ".PKG_MUI_ESTADOS_DE_CUENTA_1.P_DESDEHASTA( :Pb_CLAVE, :Pb_MES, :Pb_ANIO, :desde,:hasta); end;",
-				desde=v_desde,hasta=v_hasta, Pb_CLAVE=str(P_CLAVE), Pb_MES=P_MES, Pb_ANIO=P_ANIO)
-			if not v_desde:
+			cur1.execute(query1)
+			for data in cur1:
+				entro = True
+				P_Fefin=data[0].strftime('%Y-%m-%d')
+			if entro:
+				entro = False
+				query2 = f"SELECT MAX(femovimi) FROM {tabla} WHERE cdconc = 'SA' AND femovimi < TO_DATE('{P_Fefin}','YYYY-MM-DD')"
+				cur2 = connection.cursor()
+				cur2.execute(query2)
+				for data in cur2:
+					entro = True
+					P_Feini = data[0].strftime('%Y-%m-%d')
+			if not entro:
 				return make_response(jsonify(succes=False, message="Error en la busqueda de fechas."), 400)
-			P_Feini = str(v_desde.values[0])
-			P_Fefin = str(v_hasta.values[0])
+
 			return make_response(jsonify(succes=True, desde=P_Feini, hasta=P_Fefin), 200)
 		except Exception as ex:
 			app.logger.error(ex)
-			statement.close()
 			return make_response(jsonify(succes=False, message="Error en la busqueda de fechas."), 400)
 	except Exception as ex:
 		app.logger.error(ex)
@@ -973,7 +983,7 @@ def getheaderpdf(tipo,lista_aux,reporte):
 		lista= [("   ", "   ", "ESTADO DE CUENTA DE "+reporte, "   ", "   "),
 				("Nombre del SAT para Sura:", "Seguros SURA S.A. de C.V", "     ", "Nombre del Promotor:", lista_aux[0]),
 				("RFC de Sura:", "R.F.C R&S-811221KR6", "   ", "Clave del Promotor:", lista_aux[1]),
-				("Domicilio Sura:", "Blvd. Adolfo López Mateos No. 2448", "   ", "RFC del Agente:", lista_aux[2]),
+				("Domicilio Sura:", "Blvd. Adolfo López Mateos No. 2448", "   ", "RFC del Promotor:", lista_aux[2]),
 				("Col. Altavista C.P. 01060 Ciudad de México.", "Tel 5723-7999", "   ", "Domicilio del Promotor:", lista_aux[3]),
 				("Fecha de generación:", lista_aux[8], "   ", "Tipo de productor:", lista_aux[4]),
 				("Desde:", lista_aux[9], "   ", "Promotoría a la que pertenece:", lista_aux[5]),
