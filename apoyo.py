@@ -288,27 +288,16 @@ def getheaderquery(clave,codigo,desde,hasta):
 	return str
 
 def getheaderpdf(tipo,lista_aux,reporte):
-	lista=[]
+	identificador = "Agente"
 	if tipo=='P':
-		lista= [("   ", "   ", "ESTADO DE CUENTA DE "+reporte, "   ", "   "),
-				("Nombre del SAT para Sura:", "Seguros SURA S.A. de C.V", "     ", "Nombre del Promotor:", lista_aux[0]),
-				("RFC de Sura:", "R.F.C R&S-811221KR6", "   ", "Clave del Promotor:", lista_aux[1]),
-				("Domicilio Sura:", "Blvd. Adolfo López Mateos No. 2448", "   ", "RFC del Promotor:", lista_aux[2]),
-				("Col. Altavista C.P. 01060 Ciudad de México.", "Tel 5723-7999", "   ", "Domicilio del Promotor:", lista_aux[3]),
+		identificador = "Promotor"
+	return [("   ", "   ", "ESTADO DE CUENTA DE "+reporte, "   ", "   "),
+				("Nombre del SAT para Sura:", "Seguros SURA S.A. de C.V", "     ", f"Nombre del {identificador}:", lista_aux[0]),
+				("RFC de Sura:", "R.F.C R&S-811221KR6", "   ", f"Clave del {identificador}:", lista_aux[1]),
+				("Domicilio Sura:", "Blvd. Adolfo López Mateos No. 2448", "   ", f"RFC del {identificador}:", lista_aux[2]),
+				("Col. Altavista C.P. 01060 Ciudad de México.", "Tel 5723-7999", "   ", f"Domicilio del {identificador}:", lista_aux[3]),
 				("Fecha de generación:", lista_aux[8], "   ", "Tipo de productor:", lista_aux[4]),
 				("Desde:", lista_aux[9], "   ", "Promotoría a la que pertenece:", lista_aux[5]),
 				("Hasta:", lista_aux[10], "   ", "Clave de productor:", lista_aux[6]),
 				("Fecha de Preliquidación:", lista_aux[11], "   ", "Cuenta bancaria dada de alta:", lista_aux[7]),
 				("   ", "   ", "   ", "   ", "   ")]
-	if tipo=='A':
-		lista= [("   ","   ","ESTADO DE CUENTA DE "+reporte,"   ","   "),
-				("Nombre del SAT para Sura:", "Seguros SURA S.A. de C.V","     ","Nombre del Agente:",lista_aux[0]),
-				("RFC de Sura:", "R.F.C R&S-811221KR6","   ","Clave del Agente:",lista_aux[1]),
-				("Domicilio Sura:", "Blvd. Adolfo López Mateos No. 2448","   ","RFC del Agente:",lista_aux[2]),
-				("Col. Altavista C.P. 01060 Ciudad de México.", "Tel 5723-7999","   ","Domicilio del Agente:",lista_aux[3]),
-				("Fecha de generación:",lista_aux[8],"   ","Tipo de productor:",lista_aux[4]),
-				("Desde:",lista_aux[9],"   ","Promotoría a la que pertenece:",lista_aux[5]),
-				("Hasta:",lista_aux[10],"   ","Clave de productor:",lista_aux[6]),
-				("Fecha de Preliquidación:",lista_aux[11],"   ","Cuenta bancaria dada de alta:",lista_aux[7]),
-				("   ","   ","   ","   ","   ")]
-	return lista
