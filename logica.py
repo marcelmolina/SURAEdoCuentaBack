@@ -12,12 +12,40 @@ from io import BytesIO
 import cx_Oracle
 import os
 from dotenv import load_dotenv
+from apoyo import getHeadColumns
 from apoyo import getHeadColumnsComisones
 from apoyo import getTipoSubBono
 from apoyo import getTableNamesComisiones
 from apoyo import getquery
 from apoyo import getheaderpdf
+import asyncio
+import cx_Oracle_async
 
+async def get_oracle_pool(app):
+	try:
+		load_dotenv()
+		DB_HOST = os.getenv('DB_HOST')
+		DB_PORT = os.getenv('DB_PORT')
+		DB_SERVICE = os.getenv('DB_SERVICE')
+		DB_USER = os.getenv('DB_USER')
+		DB_PWD = os.getenv('DB_PWD')
+		DB_SCHEMA = os.getenv('DB_SCHEMA')
+		host = DB_HOST
+		port = DB_PORT
+		service_name = DB_SERVICE
+		user = DB_USER
+		password = DB_PWD
+		schema = DB_SCHEMA
+		sid = cx_Oracle_async.makedsn(host, port, service_name=service_name)
+		try:
+			pool = await cx_Oracle_async.create_pool(user,password,sid)
+			return True,"",pool
+		except Exception as ex:
+			app.logger.error(ex)
+			return False, 'Error en la conexion con la base de datos.', 0
+	except Exception as ex:
+		app.logger.error(ex)
+		return False, 'Error en la configuracion de la base de datos.', 0
 
 def getconexion(app):
 	try:
@@ -78,13 +106,19 @@ def getperiodo(P_CLAVE,P_MES,P_ANIO,app):
 		app.logger.error(ex)
 		return False, 'Error en la busqueda de fechas', 0,0
 
-def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
+async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 	try:
 		app.logger.info("Entrando a Estado de cuentas de Comisiones XLSX ("+P_COD+")")
-		con_est,con_mssg,connection = getconexion(app)
+		con_est, con_mssg, pool = await get_oracle_pool(app)
 		if not con_est:
-			return False, con_mssg,0,0,0
+			return False, con_mssg, 0, 0, 0
 		app.logger.info("Conectado a la base de datos.")
+		has_agent = False
+		app.logger.info("Iniciando carga de cursores")
+		cursors = await tasks(app, 13, P_COD, 'COMISION', P_Clave, P_Feini, P_Fefin, pool)
+		if 'Excepcion' in cursors:
+			return False, 'Hubo un error obteniendo la data', 0, 0, 0
+		app.logger.info("Cargados todos los cursores.")
 		libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.xlsx'
 		plantilla = "plantilla_agentes.xlsx"
 		if P_COD == 'P':
@@ -94,14 +128,6 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		ws = wb.worksheets[0]
 		ws.cell(row=1, column=6).value = "ESTADOS DE CUENTA DE COMISIONES"
 		ws.title = "Estado de Cuenta de Comisiones"
-		cursors = []
-		app.logger.info("Iniciando carga de cursores")
-		for times in range(13):
-			cursor = connection.cursor()
-			query = getquery(P_COD, 'COMISION', times, P_Clave, P_Feini, P_Fefin)
-			cursor.execute(query)
-			app.logger.info(f"Cargado cursor -> ({times})")
-			cursors.append(cursor)
 		has_agent = False
 		app.logger.info("Leyendo cursor de cabecera")
 		for row in cursors[0]:
@@ -191,7 +217,7 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							if len(str(valor)) > 25:
 								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
 				f += 1
-			cursor.close()
+			#cursor.close()
 			if c_count in [5, 6, 7, 8] and has_data:
 				fila_totales[0] = "{:,.2f}".format(fila_totales[0])
 				fila_totales[1] = "{:,.2f}".format(fila_totales[1])
@@ -222,23 +248,43 @@ def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		return False, 'Error generando el reporte', 0, 0,0
 
 
-def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
+async def dotask(app,i,connection,query):
+	try:
+		async with connection.cursor() as cursor:
+			await cursor.execute(query)
+			app.logger.info(f"Retorna data del cursor #{i}.")
+			return await cursor.fetchall()
+	except Exception as ex:
+		app.logger.error(ex)
+		return False
+
+async def tasks(app,number,P_COD, tipo, P_Clave, P_Feini, P_Fefin,pool):
+	try:
+		async with pool.acquire() as connection:
+			alltasks = []
+			for i in range(number):
+				alltasks.append(asyncio.create_task(dotask(app,i,connection,getquery(P_COD, tipo, i, P_Clave, P_Feini, P_Fefin))))
+			cursors = await asyncio.gather(*alltasks)
+			return cursors
+	except Exception as ex:
+		app.logger.error(ex)
+		return False
+
+
+async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 	try:
 		print("Estado de cuentas de Comisiones PDF")
 		app.logger.info("Entrando a Estado de cuentas de Comisiones PDF (" + P_COD + ")")
-		con_est, con_mssg, connection = getconexion(app)
+		con_est, con_mssg, pool = await get_oracle_pool(app)
 		if not con_est:
 			return False, con_mssg, 0, 0, 0
 		app.logger.info("Conectado a la base de datos.")
 		has_agent = False
-		cursors = []
 		app.logger.info("Iniciando carga de cursores")
-		for times in range(13):
-			cursor = connection.cursor()
-			query = getquery(P_COD, 'COMISION', times, P_Clave, P_Feini, P_Fefin)
-			cursor.execute(query)
-			app.logger.info(f"Cargado cursor -> ({times})")
-			cursors.append(cursor)
+		cursors = await tasks(app,13,P_COD, 'COMISION', P_Clave, P_Feini, P_Fefin,pool)
+		if 'Excepcion' in cursors:
+			return False, 'Hubo un error obteniendo la data', 0, 0, 0
+		app.logger.info("Cargados todos los cursores.")
 		libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.pdf'
 
 		virtual_wb = BytesIO()
@@ -328,7 +374,7 @@ def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			flowables.append(tbl)
 			flowables.append(Table([("", " ", ""), ("", "", "")]))
 			c_count += 1
-			cursor.close()
+			#cursor.close()
 		# fin de bloque
 		app.logger.info("Construyendo reporte pdf.")
 		doc.build(flowables)
@@ -338,24 +384,19 @@ def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		return False, 'Error en la generacion del reporte.', 0, 0,0
 
 
-def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
+async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 	try:
-		print("Estado de cuentas de Bonos")
 		app.logger.info("Entrando a Estado de cuentas de Bonos PDF (" + P_COD + ")")
-		con_est, con_mssg, connection = getconexion(app)
+		con_est, con_mssg, pool = await get_oracle_pool(app)
 		if not con_est:
 			return False, con_mssg, 0, 0, 0
 		app.logger.info("Conectado a la base de datos.")
 		has_agent = False
-		cursors = []
 		app.logger.info("Iniciando carga de cursores")
-		for times in range(2):
-			cursor = connection.cursor()
-			query = getquery(P_COD, 'BONO', times, P_Clave, P_Feini, P_Fefin)
-			cursor.execute(query)
-			app.logger.info(f"Cargado cursor -> ({times})")
-			cursors.append(cursor)
-
+		cursors = await tasks(app, 2, P_COD, 'BONO', P_Clave, P_Feini, P_Fefin, pool)
+		if 'Excepcion' in cursors:
+			return False, 'Hubo un error obteniendo la data', 0, 0, 0
+		app.logger.info("Cargados todos los cursores.")
 		virtual_wb = BytesIO()
 		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((432*mm, 546*mm)))
 		flowables = []
@@ -366,7 +407,7 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			lista_aux = []
 			for i in range(0, len(row)):
 				lista_aux.append(row[i])
-		cursors[0].close
+		#cursors[0].close
 		if not has_agent:
 			app.logger.error("La cabecera volvio vacia.")
 			return False, 'Identificador no encontrado', 0, 0,0
@@ -377,7 +418,7 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		flowables.append(tbl)
 
 		j = 0
-		lista = getHeadColumnsComisones("pdf")
+		lista = getHeadColumns("pdf")
 		data_body = []
 		lista_aux = []
 		has_data=False
@@ -395,7 +436,7 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					else:
 						lista_aux.append(row[i])
 			data_body.append(lista_aux)
-		cursors[1].close()
+		#cursors[1].close()
 		if not has_data:
 			app.logger.error("La tabla de detalle volvio vacia.")
 			return False, 'Error generando el reporte.', 0, 0,0
@@ -411,28 +452,25 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		return False, 'Error generando el reporte.', 0, 0,0
 
 
-def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
+async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 	try:
-		print("Estado de cuentas de Bonos XLSX")
 		app.logger.info("Entrando a Estado de cuentas de Bonos XLSX (" + P_COD + ")")
-		con_est, con_mssg, connection = getconexion(app)
+		con_est, con_mssg, pool = await get_oracle_pool(app)
 		if not con_est:
 			return False, con_mssg, 0, 0, 0
 		app.logger.info("Conectado a la base de datos.")
+		has_agent = False
+		app.logger.info("Iniciando carga de cursores")
+		cursors = await tasks(app, 2, P_COD, 'BONO', P_Clave, P_Feini, P_Fefin, pool)
+		if 'Excepcion' in cursors:
+			return False, 'Hubo un error obteniendo la data', 0, 0, 0
+		app.logger.info("Cargados todos los cursores.")
 		plantilla = "plantilla_agentes.xlsx"
 		if P_COD == 'P':
 			plantilla = "plantilla_promotor.xlsx"
 		wb = opyxl.load_workbook(plantilla)
 		app.logger.info("Cargado archivo de plantilla xlsx.")
 		ws = wb.worksheets[0]
-		cursors = []
-		app.logger.info("Iniciando carga de cursores")
-		for times in range(2):
-			cursor = connection.cursor()
-			query = getquery(P_COD,'BONO',times,P_Clave,P_Feini,P_Fefin)
-			cursor.execute(query)
-			app.logger.info(f"Cargado cursor -> ({times})")
-			cursors.append(cursor)
 
 		libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.xlsx'
 		app.logger.info("Leyendo cursor de cabecera")
@@ -442,13 +480,13 @@ def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				ws.cell(row=4 + i, column=9).value = row[i]
 			for i in range(len(row) - 4, len(row)):
 				ws.cell(row=i, column=4).value = row[i]
-		cursors[0].close()
+		#cursors[0].close()
 		if not has_agent:
 			app.logger.error("La cabecera volvio vacia.")
 			return False, 'Identificador no encontrado.', 0, 0,0
 		j = 0
 		greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
-		lista = getHeadColumnsComisones("excel")
+		lista = getHeadColumns("excel")
 		alphabet_string = string.ascii_uppercase
 		alphabet_list = list(alphabet_string)
 		for item in lista:
@@ -504,7 +542,7 @@ def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			if row[21] == 'NO':
 				ws.cell(row=14 + j, column=11).value = ' '
 			j += 1
-		cursors[1].close()
+		#cursors[1].close()
 		if not has_data:
 			app.logger.error("La tabla de detalle volvio vacia.")
 			return False, 'Error en la generacion del reporte.', 0, 0,0

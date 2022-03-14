@@ -40,9 +40,11 @@ def getHeadColumnsComisones(extension,cursor):
 		lista.append("ISR")
 		lista.append("IMP. CEDULAR")
 		lista.append("TOTAL")
+		return lista
 	if cursor in [3,4,9,10]:
 		lista.append("CONCEPTO")
 		lista.append("IMPORTE")
+		return lista
 
 	if cursor in [5,6,7,8]:
 		lista.append("Daños/Vida")
@@ -67,6 +69,8 @@ def getHeadColumnsComisones(extension,cursor):
 		if extension == "excel":
 			lista.append("# Comprobante")
 		lista.append("Fecha aplicación de la póliza")
+		return lista
+
 	if cursor in [11,12]:
 		lista.append("FECHA DE LIQUIDACIÓN")
 		lista.append("DAÑOS")
@@ -77,48 +81,49 @@ def getHeadColumnsComisones(extension,cursor):
 		lista.append("IMPORTEPAGADO DAÑOS")
 		lista.append("IMPORTE PAGADO VIDA")
 		lista.append("TOTAL")
+		return lista
 	return lista
 
 
 def getTipoSubBono(id):
 	codigo=""
 	if id == 20:
-		codigo = "BS"
+		return "BS"
 	if id == 30:
-		codigo = "BC"
+		return "BC"
 	if id == 40:
-		codigo = "BP"
+		return "BP"
 	if id == 50:
-		codigo = "BSE"
+		return "BSE"
 	if id == 60:
-		codigo = "BCS"
+		return "BCS"
 	if id == 70:
-		codigo = "BPS"
+		return "BPS"
 	if id == 80:
-		codigo = "BPF"
+		return "BPF"
 	if id == 82:
-		codigo = "BD"
+		return "BD"
 	return codigo
 
 
 def getTableNamesComisiones(tabla):
 	nombre=""
 	if tabla == 1:
-		nombre = "TOTAL DE PERCEPCIONES MENSUALES"
+		return "TOTAL DE PERCEPCIONES MENSUALES"
 	if tabla == 2:
-		nombre = "TOTAL DE PERCEPCIONES ACUMULADO ANUAL"
+		return "TOTAL DE PERCEPCIONES ACUMULADO ANUAL"
 	if tabla in [3,5]:
-		nombre = "DAÑOS MONEDA MXP"
+		return "DAÑOS MONEDA MXP"
 	if tabla in [4,6]:
-		nombre = "DAÑOS MONEDA USD"
+		return "DAÑOS MONEDA USD"
 	if tabla in [9,7]:
-		nombre = "VIDA MONEDA MXP"
+		return "VIDA MONEDA MXP"
 	if tabla in [10,8]:
-		nombre = "VIDA MONEDA USD"
+		return "VIDA MONEDA USD"
 	if tabla == 11:
-		nombre = "RESUMEN DE DEPOSITOS EN MXP"
+		return "RESUMEN DE DEPOSITOS EN MXP"
 	if tabla == 12:
-		nombre = "RESUMEN DE DEPOSITOS EN USD"
+		return "RESUMEN DE DEPOSITOS EN USD"
 	return nombre
 
 
