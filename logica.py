@@ -2,6 +2,7 @@ import openpyxl as opyxl
 from openpyxl.styles import PatternFill
 from openpyxl.styles import Font
 from openpyxl.styles import Alignment
+from openpyxl.styles.borders import Border, Side
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import landscape
@@ -141,7 +142,7 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			app.logger.error("La cabecera volvio vacia.")
 			return False,'Identificador no encontrado',0,0,0
 		del cursors[0]
-		f = 13  # principal gestor de filas del archivo
+		f = 14  # principal gestor de filas del archivo
 		greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
 		# NUEVO BLOQUE SECUENCIAL
 		c_count = 1
@@ -157,6 +158,8 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			j = 0
 			for item in lista:
 				ws.cell(row=f, column=j + 1).value = item
+				ws.cell(row=f, column=j + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+															 top=Side(style='thin'), bottom=Side(style='thin'))
 				ws.cell(row=f, column=j + 1).fill = greyFill
 				ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
 				ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
@@ -191,6 +194,7 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							if i in [1, 3, 6, 7, 8]:
 								valor = "{:,.2f}".format(valor)
 						ws.cell(row=f, column=i + 1).value = valor
+						ws.cell(row=f, column=i + 1).border= Border(left=Side(style='thin'), right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
 						if len(str(valor)) > 17:
 							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
@@ -212,6 +216,8 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							fila_totales[4] += abs(row[i])
 						has_data = True
 						ws.cell(row=f, column=i + 1).value = valor
+						ws.cell(row=f, column=i + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+																	 top=Side(style='thin'), bottom=Side(style='thin'))
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
 						if len(str(valor)) > 17:
 							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
@@ -238,6 +244,7 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				ws.cell(row=f, column=16).value = fila_totales[4]
 				ws.cell(row=f, column=16).alignment = Alignment(horizontal="center", vertical="center")
 				f += 1
+			f += 1
 			c_count += 1
 		# fin de bloque
 		virtual_wb = BytesIO()
@@ -308,7 +315,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		del cursors[0]
 		c_count = 1
 		tblstyle = TableStyle(
-			[('GRID', (0, 0), (0, 0), 0.25, colors.gray), ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+			[('GRID', (0, 0), (-1,-1), 0.25, colors.gray), ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
 			 ('FONTSIZE', (0, 0), (0, 0), 7)])
 		for cursor in cursors:
 			app.logger.info(f"Leyendo cursor -> ({c_count})")
@@ -446,7 +453,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			app.logger.error("La tabla de detalle volvio vacia.")
 			return False, 'Error generando el reporte.', 0, 0,0
 		tbl = Table(data_body)
-		tblstyle = TableStyle([('GRID',(0,0),(0,0),0.25,colors.gray),('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),('FONTSIZE', (0, 0), (0, 0), 7)])
+		tblstyle = TableStyle([('GRID',(0,0),(-1,-1),0.25,colors.gray),('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),('FONTSIZE', (0, 0), (0, 0), 7)])
 		tbl.setStyle(tblstyle)
 		flowables.append(tbl)
 
@@ -499,6 +506,8 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		for item in lista:
 			ws.cell(row=13, column=j + 1).value = item
 			ws.cell(row=13, column=j + 1).fill = greyFill
+			ws.cell(row=13, column=j + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														 top=Side(style='thin'), bottom=Side(style='thin'))
 			ws.cell(row=13, column=j + 1).font = Font(name='Arial', size=9, bold=True)
 			ws.cell(row=13, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
 			columna = alphabet_list[ws.cell(row=13, column=j + 1).column - 1]
@@ -531,6 +540,8 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						if i == 2:
 							valor = getTipoSubBono(row[i])
 						ws.cell(row=14 + j, column=i + 1 + aux).value = valor
+						ws.cell(row=14+j, column=i + 1+aux).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+																	 top=Side(style='thin'), bottom=Side(style='thin'))
 						ws.cell(row=14 + j, column=i + 1 + aux).alignment = Alignment(horizontal="center",
 																					  vertical="center")
 						if len(str(valor)) > 17:
@@ -556,6 +567,8 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					if i == 2:
 						valor = getTipoSubBono(row[i])
 					ws.cell(row=14 + j, column=i + 1 ).value = valor
+					ws.cell(row=14+j, column=i + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+																 top=Side(style='thin'), bottom=Side(style='thin'))
 					ws.cell(row=14 + j, column=i + 1 ).alignment = Alignment(horizontal="center",vertical="center")
 					if len(str(valor)) > 17:
 						ws.cell(row=14 + j, column=i + 1 ).font = Font(name='Arial', size=8)
