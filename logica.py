@@ -256,7 +256,7 @@ async def dotask(app,i,connection,query):
 			return await cursor.fetchall()
 	except Exception as ex:
 		app.logger.error(ex)
-		return False
+		return "Excepcion"
 
 async def tasks(app,number,P_COD, tipo, P_Clave, P_Feini, P_Fefin,pool):
 	try:
@@ -268,7 +268,7 @@ async def tasks(app,number,P_COD, tipo, P_Clave, P_Feini, P_Fefin,pool):
 			return cursors
 	except Exception as ex:
 		app.logger.error(ex)
-		return False
+		return "Excepcion"
 
 
 async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
