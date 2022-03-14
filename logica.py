@@ -325,7 +325,15 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			taux.setStyle(grid)
 			flowables.append(taux)
 			data_cursor.append(lista)
-			fila_totales = ["", "", "", "", "", "", "", "TOTAL", 0, 0, "", 0, 0, 0, "", ""]
+			fila_totales = []
+			if c_count  in [5,6,7,8]:
+				fila_totales = ["", "", "", "", "", "", "", "TOTAL", 0, 0, "", 0, 0, 0, "", ""]
+			if c_count in [1,2]:
+				fila_totales= ["TOTAL",0,0,0,0,0,0,0]
+			if c_count in [3,4,9,10]:
+				fila_totales= ["TOTAL",0]
+			if c_count in [11,12]:
+				fila_totales= ["TOTAL",0,0,0," ","TOTA PAGADO",0,0,0]
 			for row in cursor:
 				lista_aux = []
 				for i in range(0, len(row)):
@@ -337,18 +345,21 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
 								else:
 									valor = "{:,.2f}".format(valor)
+								fila_totales[i] += abs(row[i])
 						if c_count in [3,4,9,10]:
 							if i != 0:
 								if valor < 0:
 									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
 								else:
 									valor = "{:,.2f}".format(valor)
+								#fila_totales[i] += abs(row[i])
 						if c_count in [11,12]:
-							if i in [1,3,6,7,8]:
+							if i in [1,2,3,6,7,8]:
 								if valor < 0:
 									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
 								else:
 									valor = "{:,.2f}".format(valor)
+								fila_totales[i] += abs(row[i])
 						lista_aux.append(valor)
 					else:
 						if i not in [1,6,17]:
@@ -370,12 +381,29 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							if i == 15:
 								fila_totales[13] += abs(row[i])
 				data_cursor.append(lista_aux)
-			if c_count in [5,6,7,8] and len(data_cursor)>0:
+			if c_count in [5,6,7,8]:
 				fila_totales[8] = "{:,.2f}".format(fila_totales[8])
 				fila_totales[9] = "{:,.2f}".format(fila_totales[9])
 				fila_totales[11] = "{:,.2f}".format(fila_totales[11])
 				fila_totales[12] = "{:,.2f}".format(fila_totales[12])
 				fila_totales[13] = "{:,.2f}".format(fila_totales[13])
+				data_cursor.append(fila_totales)
+			if c_count in [1,2]:
+				fila_totales[1] = "{:,.2f}".format(fila_totales[1])
+				fila_totales[2] = "{:,.2f}".format(fila_totales[2])
+				fila_totales[3] = "{:,.2f}".format(fila_totales[3])
+				fila_totales[4] = "{:,.2f}".format(fila_totales[4])
+				fila_totales[5] = "{:,.2f}".format(fila_totales[5])
+				fila_totales[6] = "{:,.2f}".format(fila_totales[6])
+				fila_totales[7] = "{:,.2f}".format(fila_totales[7])
+				data_cursor.append(fila_totales)
+			if c_count in [11,12]:
+				fila_totales[1] = "{:,.2f}".format(fila_totales[1])
+				fila_totales[2] = "{:,.2f}".format(fila_totales[2])
+				fila_totales[3] = "{:,.2f}".format(fila_totales[3])
+				fila_totales[6] = "{:,.2f}".format(fila_totales[6])
+				fila_totales[7] = "{:,.2f}".format(fila_totales[7])
+				fila_totales[7] = "{:,.2f}".format(fila_totales[8])
 				data_cursor.append(fila_totales)
 			tbl = Table(data_cursor)
 			tbl.setStyle(tblstyle)
