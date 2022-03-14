@@ -576,30 +576,16 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 
 
 class PageNumCanvas(canvas.Canvas):
-	"""
-    http://code.activestate.com/recipes/546511-page-x-of-y-with-reportlab/
-    http://code.activestate.com/recipes/576832/
-    """
-
-	# ----------------------------------------------------------------------
 	def __init__(self, *args, **kwargs):
 		"""Constructor"""
 		canvas.Canvas.__init__(self, *args, **kwargs)
 		self.pages = []
 
-	# ----------------------------------------------------------------------
 	def showPage(self):
-		"""
-        On a page break, add information to the list
-        """
 		self.pages.append(dict(self.__dict__))
 		self._startPage()
 
-	# ----------------------------------------------------------------------
 	def save(self):
-		"""
-        Add the page number to each page (page x of y)
-        """
 		page_count = len(self.pages)
 
 		for page in self.pages:
@@ -609,11 +595,7 @@ class PageNumCanvas(canvas.Canvas):
 
 		canvas.Canvas.save(self)
 
-	# ----------------------------------------------------------------------
 	def draw_page_number(self, page_count):
-		"""
-        Add the page number
-        """
 		page = "Pagina %s de %s" % (self._pageNumber, page_count)
 		self.setFont("Helvetica", 11)
 		self.drawRightString(480 * mm, 420 * mm, page)
