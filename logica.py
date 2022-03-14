@@ -12,6 +12,7 @@ from io import BytesIO
 import cx_Oracle
 import os
 from dotenv import load_dotenv
+from apoyo import getHeadColumns
 from apoyo import getHeadColumnsComisones
 from apoyo import getTipoSubBono
 from apoyo import getTableNamesComisiones
@@ -377,7 +378,7 @@ def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		flowables.append(tbl)
 
 		j = 0
-		lista = getHeadColumnsComisones("pdf")
+		lista = getHeadColumns("pdf")
 		data_body = []
 		lista_aux = []
 		has_data=False
@@ -448,7 +449,7 @@ def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			return False, 'Identificador no encontrado.', 0, 0,0
 		j = 0
 		greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
-		lista = getHeadColumnsComisones("excel")
+		lista = getHeadColumns("excel")
 		alphabet_string = string.ascii_uppercase
 		alphabet_list = list(alphabet_string)
 		for item in lista:
