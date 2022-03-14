@@ -3,6 +3,7 @@ from openpyxl.styles import PatternFill
 from openpyxl.styles import Font
 from openpyxl.styles import Alignment
 from reportlab.lib import colors
+from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import landscape
 from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
@@ -377,7 +378,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			#cursor.close()
 		# fin de bloque
 		app.logger.info("Construyendo reporte pdf.")
-		doc.build(flowables)
+		doc.build(flowables,canvasmaker=PageNumCanvas)
 		return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
 	except Exception as ex:
 		app.logger.error(ex)
@@ -450,7 +451,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		flowables.append(tbl)
 
 		app.logger.info("Construyendo reporte pdf.")
-		doc.build(flowables)
+		doc.build(flowables,canvasmaker=PageNumCanvas)
 		return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
 	except Exception as ex:
 		return False, 'Error generando el reporte.', 0, 0,0
@@ -573,3 +574,46 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		app.logger.error(ex)
 		return False, 'Error en la generacion del reporte.', 0, 0,0
 
+
+class PageNumCanvas(canvas.Canvas):
+	"""
+    http://code.activestate.com/recipes/546511-page-x-of-y-with-reportlab/
+    http://code.activestate.com/recipes/576832/
+    """
+
+	# ----------------------------------------------------------------------
+	def __init__(self, *args, **kwargs):
+		"""Constructor"""
+		canvas.Canvas.__init__(self, *args, **kwargs)
+		self.pages = []
+
+	# ----------------------------------------------------------------------
+	def showPage(self):
+		"""
+        On a page break, add information to the list
+        """
+		self.pages.append(dict(self.__dict__))
+		self._startPage()
+
+	# ----------------------------------------------------------------------
+	def save(self):
+		"""
+        Add the page number to each page (page x of y)
+        """
+		page_count = len(self.pages)
+
+		for page in self.pages:
+			self.__dict__.update(page)
+			self.draw_page_number(page_count)
+			canvas.Canvas.showPage(self)
+
+		canvas.Canvas.save(self)
+
+	# ----------------------------------------------------------------------
+	def draw_page_number(self, page_count):
+		"""
+        Add the page number
+        """
+		page = "Pagina %s de %s" % (self._pageNumber, page_count)
+		self.setFont("Helvetica", 9)
+		self.drawRightString(480 * mm, 420 * mm, page)
