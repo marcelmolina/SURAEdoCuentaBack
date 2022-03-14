@@ -615,5 +615,5 @@ class PageNumCanvas(canvas.Canvas):
         Add the page number
         """
 		page = "Pagina %s de %s" % (self._pageNumber, page_count)
-		self.setFont("Helvetica", 9)
+		self.setFont("Helvetica", 11)
 		self.drawRightString(480 * mm, 420 * mm, page)
