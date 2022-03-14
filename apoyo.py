@@ -1,32 +1,55 @@
 
-def getHeadColumns(extension):
-    lista = []
-    lista.append('# Bono')
-    lista.append('Tipo Bono')
-    lista.append('Subtipo Bono')
-    if extension == "excel":
-        lista.append('Grupo')
-    lista.append('Oficina')
-    lista.append('Ramo')
-    lista.append('Poliza')
-    lista.append('Contratante')
-    if extension == "excel":
-        lista.append('Agentes')
-        lista.append('Computabilidad')
-        lista.append('Causa de No Computabilidad')
-    lista.append('Tipo Cambio')
-    lista.append('# Recibo')
-    lista.append('Serie')
-    lista.append('Prima Total')
-    lista.append('Prima Neta')
-    lista.append('% Bono Pagado')
-    lista.append('Monto comisión neta')
-    lista.append('Total comisión pagada')
-    lista.append('# Liquidación')
-    if extension == "excel":
-        lista.append('# Comprobante')
-    lista.append('Fecha Movimiento')
-    return lista
+def getHeadColumnsBonos(extension,tipo):
+	lista = []
+	if tipo in ['A','P']:
+		lista.append('# Bono')
+		lista.append('Tipo Bono')
+		lista.append('Subtipo Bono')
+		if extension == "excel":
+			lista.append('Grupo')
+		lista.append('Oficina')
+		lista.append('Ramo')
+		lista.append('Poliza')
+		lista.append('Contratante')
+		if extension == "excel":
+			lista.append('Agentes')
+			lista.append('Computabilidad')
+			lista.append('Causa de No Computabilidad')
+		lista.append('Tipo Cambio')
+		lista.append('# Recibo')
+		lista.append('Serie')
+		lista.append('Prima Total')
+		lista.append('Prima Neta')
+		lista.append('% Bono Pagado')
+		lista.append('Monto comisión neta')
+		lista.append('Total comisión pagada')
+		lista.append('# Liquidación')
+		if extension == "excel":
+			lista.append('# Comprobante')
+		lista.append('Fecha Movimiento')
+
+	if tipo == 'UDI':
+		lista.append('# Bono')
+		if extension == "excel":
+			lista.append('Tipo Bono')
+			lista.append('Subtipo Bono')
+		lista.append('Grupo')
+		lista.append('Oficina')
+		lista.append('Ramo')
+		lista.append('Poliza')
+		lista.append('Contratante')
+		lista.append('Tipo Cambio')
+		lista.append('# Recibo')
+		lista.append('Prima Total')
+		lista.append('Prima Neta')
+		lista.append('% Bono Pagado')
+		lista.append('Monto comisión neta')
+		lista.append('Total comisión pagada')
+		lista.append('# Liquidación')
+		if extension == "excel":
+			lista.append('# Comprobante')
+		lista.append('Fecha Movimiento')
+	return lista
 
 
 def getHeadColumnsComisones(extension,cursor):
@@ -129,6 +152,13 @@ def getTableNamesComisiones(tabla):
 
 def getquery(clave,tipo,tabla,codigo,desde,hasta):
 	query = ""
+	if clave == 'UDI':
+		if tipo == 'BONO':
+			if tabla == 0:
+				query = getheaderquery('UDI',codigo,desde,hasta)
+			if tabla == 1:
+				query = f"SELECT MAIN.NMBONO,MAIN.DSBONO,MAIN.CDTIPBON, MAIN.CDGRUPO,MAIN.CDUNIECO, MAIN.CDRAMO,MAIN.NMPOLIZA, nomtomador(MAIN.CDUNIECO, MAIN.CDRAMO, 'M', MAIN.NMPOLIZA, 9999999999999999999) CONTRATANTE, MAIN.TIPOCAMB, MAIN.NMRECIBO, NVL(MAIN.PMATOTAL,0) PRIMA_TOTAL, NVL(MAIN.PMANETAP,0) PRIMA_NETA, MAIN.PORCEPAG, ABS(MAIN.IMPORPROV), (ABS(MAIN.IMPORPROV)+ABS(MAIN.IMPORPROR)) TOTAL_PAGADO, MAIN.NUMPRELIQ, DECODE(NVL(MAIN.CDCOMPRO,0),0,'',DECODE(MAIN.CDMETPAG,'EFT',MAIN.NMTRANSF,'CHK',MAIN.NMCHEQUE,MAIN.CDCOMPRO)) NUM_COMPROBANTE, TO_CHAR(MAIN.FEMOVIMI,'DD/MM/YYYY') FECHA FROM (SELECT E.TIPOCAMB, C.NMBONO,D.DSBONO,C.CDTIPBON, E.CDGRUPO,E.CDUNIECO, E.CDRAMO,E.NMPOLIZA,a.cdprovee,E.NMRECIBO,F.SERIERECIBO,G.NMTRANSF,G.CDMETPAG,G.NMCHEQUE,G.CDCOMPRO, F.PMATOTAL,F.PMANETAP,C.PORCEPAG,F.IMPORPROV,F.IMPORPROR,A.NUMPRELIQ,A.FEMOVIMI,E.CDTIPMOV,E.CDRECPAG FROM tsia_movudi A ,tsia_tipmovi a1, BON_TPAGLIQ B, BON_TCONFBON C, BON_TCATBONO D, VBON_DESGLOSE E, tsia_detcom F, MINTPSOFT G WHERE A.cdprovee ='{codigo}' " \
+						f"AND A.FEMOVIMI BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdcvemov < 1000 AND a.cdconc = a1.cdconc AND a.cdcvemov = a1.cdcvemov AND a1.swconinm IN ('C','I','R','V','T') AND B.NUMPRELIQ =A.NUMPRELIQ AND B.CDAGPROU = A.cdprovee AND B.CDCVEMOV = A.CDCVEMOV AND B.CDCONC = A.CDCONC AND C.NMBONO = B.NMBONO AND D.CDBONO = C.CDBONO AND E.NMBONO= C.NMBONO AND A.cdprovee= E.cdprovee AND E.NMPOLIZA= F.NMPOLIZA AND E.CDUNIECO= F.CDUNIECO AND E.CDRAMO= F.CDRAMO AND E.NMRECIBO= F.NMRECIBO AND B.NUMPRELIQ =G.NUMPRELI (+) AND A.CDCVEMOV = B.CDCVEMOV(+) AND A.CDCONC = B.CDCONC (+) GROUP BY E.TIPOCAMB, C.NMBONO,D.DSBONO,C.CDTIPBON, E.CDGRUPO,E.CDUNIECO, E.CDRAMO,E.NMPOLIZA,a.cdprovee,E.NMRECIBO,F.SERIERECIBO,G.NMTRANSF,G.CDMETPAG,G.NMCHEQUE,G.CDCOMPRO, F.PMATOTAL,F.PMANETAP,C.PORCEPAG,F.IMPORPROV,F.IMPORPROR,A.NUMPRELIQ,A.FEMOVIMI,E.CDTIPMOV,E.CDRECPAG ORDER BY FEMOVIMI ASC) MAIN"
 	if clave == 'A':
 		if tipo == 'BONO':
 			if tabla == 0:
@@ -287,15 +317,19 @@ def getquery(clave,tipo,tabla,codigo,desde,hasta):
 def getheaderquery(clave,codigo,desde,hasta):
 	str= ""
 	if clave == 'A':
-		str=f"SELECT DISTINCT d.dsnombre Nombre, a.cdagente Clave, d.cdideper RFC, e.dsdomici||', '||h.dsprovin||', '||f.dscoloni||', '||j.dsmunici||DECODE(e.cdpostal,NULL,NULL,', C.P. '||e.cdpostal) DIRECCION, 'Agente' Tipo_Productor, b.cdpromot||' - '||c.dspromot PROMOTORIA, a.cdagente Clave_Agente, PKG_Alea_Algoritmos_Cob.fr_Recup_CLABE(a.cdagente) CUENTA_CLABE, TO_CHAR(SYSDATE,'DD/MM/YYYY') PERIODO_CORTE, '{desde}' FEINICIO, '{hasta}' FEFIN, TO_CHAR((SELECT Min(feenvio) FROM tsia_movagen A ,BON_TPAGLIQ B WHERE B.NUMPRELIQ =A.NUMPRELIQ AND b.FEENVIO BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdagente= '{codigo}' AND B.CDAGPROU = A.CDAGENTE AND B.CDCVEMOV = A.CDCVEMOV AND B.CDCONC = A.CDCONC ),'DD/MM/YYYY') FECHA_PRELIQ FROM tsia_movagen a, tsia_catagt b, tsia_promotor c, mpersona d,mdomicil e,tcolonia f,tmanteni g,tprovin h,tcodipos i,tmunici j WHERE TRUNC(a.femovimi) BETWEEN TO_DATE('{desde}','DD/MM/YYYY') AND TO_DATE('{hasta}','DD/MM/YYYY') AND a.cdagente = '{codigo}' AND a.cdagente = b.cdagente AND b.cdpromot = c.cdpromot AND b.cdperson = d.cdperson AND d.cdperson = e.cdperson AND e.nmorddom = 1 AND e.cdcoloni = f.cdcoloni AND g.cdtabla = 'TPAISES' AND g.codigo = e.cdpais AND h.cdprovin = j.cdprovin AND a.ptimport <> 0 AND i.cdcodpos = e.cdpostal and j.cdprovin = i.cdprovin and j.cdmunici = i.cdmunici"
+		str = f"SELECT DISTINCT d.dsnombre Nombre, a.cdagente Clave, d.cdideper RFC, e.dsdomici||', '||h.dsprovin||', '||f.dscoloni||', '||j.dsmunici||DECODE(e.cdpostal,NULL,NULL,', C.P. '||e.cdpostal) DIRECCION, 'Agente' Tipo_Productor, b.cdpromot||' - '||c.dspromot PROMOTORIA, a.cdagente Clave_Agente, PKG_Alea_Algoritmos_Cob.fr_Recup_CLABE(a.cdagente) CUENTA_CLABE, TO_CHAR(SYSDATE,'DD/MM/YYYY') PERIODO_CORTE, '{desde}' FEINICIO, '{hasta}' FEFIN, TO_CHAR((SELECT Min(feenvio) FROM tsia_movagen A ,BON_TPAGLIQ B WHERE B.NUMPRELIQ =A.NUMPRELIQ AND b.FEENVIO BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdagente= '{codigo}' AND B.CDAGPROU = A.CDAGENTE AND B.CDCVEMOV = A.CDCVEMOV AND B.CDCONC = A.CDCONC ),'DD/MM/YYYY') FECHA_PRELIQ FROM tsia_movagen a, tsia_catagt b, tsia_promotor c, mpersona d,mdomicil e,tcolonia f,tmanteni g,tprovin h,tcodipos i,tmunici j WHERE TRUNC(a.femovimi) BETWEEN TO_DATE('{desde}','DD/MM/YYYY') AND TO_DATE('{hasta}','DD/MM/YYYY') AND a.cdagente = '{codigo}' AND a.cdagente = b.cdagente AND b.cdpromot = c.cdpromot AND b.cdperson = d.cdperson AND d.cdperson = e.cdperson AND e.nmorddom = 1 AND e.cdcoloni = f.cdcoloni AND g.cdtabla = 'TPAISES' AND g.codigo = e.cdpais AND h.cdprovin = j.cdprovin AND a.ptimport <> 0 AND i.cdcodpos = e.cdpostal and j.cdprovin = i.cdprovin and j.cdmunici = i.cdmunici"
 	if clave == 'P':
-		str=f"SELECT DISTINCT c.dspromot Nombre, a.cdpromot Clave, c.rfc RFC, c.dspoblac||', '||c.dscoloni||', '||c.dscalle||', '||c.nmtelef1||DECODE(c.nmcodpos,NULL,NULL,', C.P. '||c.nmcodpos) DIRECCION, 'Promotor' Tipo_Productor, ' ' PROMOTORIA, c.CDEJECUT Clave_Agente, (SELECT clabe FROM rsa_mcuentas WHERE cdperson=c.cdperson and NMORDCTA=1 UNION SELECT cuenta FROM rsa_mctaint WHERE cdperson = c.cdperson AND NMORDCTA=1) cuenta_bancaria, TO_CHAR(SYSDATE,'DD/MM/YYYY') PERIODO_CORTE, '{desde}' FEINICIO, '{hasta}' FEFIN, TO_CHAR((SELECT Min(feenvio) FROM tsia_movprom A ,BON_TPAGLIQ B WHERE B.NUMPRELIQ =A.NUMPRELIQ AND b.FEENVIO BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdpromot= '{codigo}' AND B.CDAGPROU = A.cdpromot AND B.CDCVEMOV = A.CDCVEMOV AND B.CDCONC = A.CDCONC ),'DD/MM/YYYY') FECHA_PRELIQ FROM tsia_movprom a, tsia_promotor c, mpersona d, mdomicil e WHERE TRUNC(a.femovimi) BETWEEN TO_DATE('{desde}','DD/MM/YYYY') AND TO_DATE('{hasta}','DD/MM/YYYY') AND a.cdpromot = '{codigo}' AND a.cdpromot = c.cdpromot AND c.cdperson = d.cdperson AND d.cdperson = e.cdperson AND e.nmorddom = 1 AND a.ptimport <> 0"
+		str = f"SELECT DISTINCT c.dspromot Nombre, a.cdpromot Clave, c.rfc RFC, c.dspoblac||', '||c.dscoloni||', '||c.dscalle||', '||c.nmtelef1||DECODE(c.nmcodpos,NULL,NULL,', C.P. '||c.nmcodpos) DIRECCION, 'Promotor' Tipo_Productor, ' ' PROMOTORIA, c.CDEJECUT Clave_Agente, (SELECT clabe FROM rsa_mcuentas WHERE cdperson=c.cdperson and NMORDCTA=1 UNION SELECT cuenta FROM rsa_mctaint WHERE cdperson = c.cdperson AND NMORDCTA=1) cuenta_bancaria, TO_CHAR(SYSDATE,'DD/MM/YYYY') PERIODO_CORTE, '{desde}' FEINICIO, '{hasta}' FEFIN, TO_CHAR((SELECT Min(feenvio) FROM tsia_movprom A ,BON_TPAGLIQ B WHERE B.NUMPRELIQ =A.NUMPRELIQ AND b.FEENVIO BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdpromot= '{codigo}' AND B.CDAGPROU = A.cdpromot AND B.CDCVEMOV = A.CDCVEMOV AND B.CDCONC = A.CDCONC ),'DD/MM/YYYY') FECHA_PRELIQ FROM tsia_movprom a, tsia_promotor c, mpersona d, mdomicil e WHERE TRUNC(a.femovimi) BETWEEN TO_DATE('{desde}','DD/MM/YYYY') AND TO_DATE('{hasta}','DD/MM/YYYY') AND a.cdpromot = '{codigo}' AND a.cdpromot = c.cdpromot AND c.cdperson = d.cdperson AND d.cdperson = e.cdperson AND e.nmorddom = 1 AND a.ptimport <> 0"
+	if clave=='UDI':
+		str = f"SELECT DISTINCT d.dsnombre Nombre, a.cdprovee Clave, d.cdideper RFC, e.dsdomici||', '||h.dsprovin||', '||f.dscoloni||', '||j.dsmunici||'. '||h.dsprovin||DECODE(e.cdpostal,NULL,NULL,', C.P. '||e.cdpostal) DIRECCION, 'Proveedor de Servicio' Tipo_Productor, ' ' PROMOTORIA, c.CVE_AGENTE Clave_Agente, (SELECT clabe FROM rsa_mcuentas WHERE cdperson=c.cdperson and NMORDCTA=1 UNION SELECT cuenta FROM rsa_mctaint WHERE cdperson = c.cdperson AND NMORDCTA=1) cuenta_bancaria, TO_CHAR(SYSDATE,'DD/MM/YYYY') PERIODO_CORTE, '{desde}' FEINICIO, '{hasta}' FEFIN, TO_CHAR((SELECT Min(feenvio) FROM tsia_movudi A ,BON_TPAGLIQ B WHERE B.NUMPRELIQ =A.NUMPRELIQ AND b.FEENVIO BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdprovee= '{codigo}' AND B.CDAGPROU = A.cdprovee AND B.CDCVEMOV = A.CDCVEMOV AND B.CDCONC = A.CDCONC ),'DD/MM/YYYY') FECHA_PRELIQ FROM tsia_movudi a, tsia_udi c, mpersona d, mdomicil e,tcolonia f,tmanteni g,tprovin h,tcodipos i,tmunici j WHERE TRUNC(a.femovimi) BETWEEN TO_DATE('{desde}','DD/MM/YYYY') AND TO_DATE('{hasta}','DD/MM/YYYY') AND a.cdprovee = '{codigo}' AND a.cdprovee = c.cdprovee AND c.cdperson = d.cdperson AND d.cdperson = e.cdperson AND e.nmorddom = 1 AND e.cdcoloni = f.cdcoloni AND g.cdtabla = 'TPAISES' AND g.codigo = e.cdpais AND h.cdprovin = j.cdprovin AND a.ptimport <> 0 AND i.cdcodpos = e.cdpostal and j.cdprovin = i.cdprovin and j.cdmunici = i.cdmunici"
 	return str
 
 def getheaderpdf(tipo,lista_aux,reporte):
 	identificador = "Agente"
-	if tipo=='P':
+	if tipo == 'P':
 		identificador = "Promotor"
+	if tipo == 'UDI':
+		identificador = "Prestador de servicio"
 	return [("   ", "   ", "ESTADO DE CUENTA DE "+reporte, "   ", "   "),
 				("Nombre del SAT para Sura:", "Seguros SURA S.A. de C.V", "     ", f"Nombre del {identificador}:", lista_aux[0]),
 				("RFC de Sura:", "R.F.C R&S-811221KR6", "   ", f"Clave del {identificador}:", lista_aux[1]),

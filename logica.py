@@ -12,7 +12,7 @@ from io import BytesIO
 import cx_Oracle
 import os
 from dotenv import load_dotenv
-from apoyo import getHeadColumns
+from apoyo import getHeadColumnsBonos
 from apoyo import getHeadColumnsComisones
 from apoyo import getTipoSubBono
 from apoyo import getTableNamesComisiones
@@ -418,7 +418,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		flowables.append(tbl)
 
 		j = 0
-		lista = getHeadColumns("pdf")
+		lista = getHeadColumnsBonos("PDF",P_COD)
 		data_body = []
 		lista_aux = []
 		has_data=False
@@ -430,10 +430,14 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			has_data=True
 			lista_aux = []
 			for i in range(0, len(row)):
-				if i < 21 and i not in [3,8,9,19]:
-					if i == 2:
-						lista_aux.append(getTipoSubBono(row[i]))
-					else:
+				if P_COD in ["A", "P"]:
+					if i < 21 and i not in [3,8,9,19]:
+						if i == 2:
+							lista_aux.append(getTipoSubBono(row[i]))
+						else:
+							lista_aux.append(row[i])
+				if P_COD == 'UDI':
+					if i not in [1,2,16]:
 						lista_aux.append(row[i])
 			data_body.append(lista_aux)
 		#cursors[1].close()
@@ -468,6 +472,8 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		plantilla = "plantilla_agentes.xlsx"
 		if P_COD == 'P':
 			plantilla = "plantilla_promotor.xlsx"
+		if P_COD == 'UDI':
+			plantilla = "plantilla_udi.xlsx"
 		wb = opyxl.load_workbook(plantilla)
 		app.logger.info("Cargado archivo de plantilla xlsx.")
 		ws = wb.worksheets[0]
@@ -486,7 +492,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			return False, 'Identificador no encontrado.', 0, 0,0
 		j = 0
 		greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
-		lista = getHeadColumns("excel")
+		lista = getHeadColumnsBonos("excel",P_COD)
 		alphabet_string = string.ascii_uppercase
 		alphabet_list = list(alphabet_string)
 		for item in lista:
@@ -513,34 +519,47 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		for row in cursors[1]:
 			has_data = True
 			lista_razones = []
-			for i in range(0, len(row)):
+			if P_COD in ["A","P"]:
+				for i in range(0, len(row)):
 
-				if i < 21:
-					aux = 0
-					if i >=9:
-						aux=1
+					if i < 21:
+						aux = 0
+						if i >= 9:
+							aux = 1
+						valor = row[i]
+						if i == 2:
+							valor = getTipoSubBono(row[i])
+						ws.cell(row=14 + j, column=i + 1 + aux).value = valor
+						ws.cell(row=14 + j, column=i + 1 + aux).alignment = Alignment(horizontal="center",
+																					  vertical="center")
+						if len(str(valor)) > 17:
+							ws.cell(row=14 + j, column=i + 1 + aux).font = Font(name='Arial', size=8)
+							if len(str(valor)) > 25:
+								ws.cell(row=14 + j, column=i + 1 + aux).font = Font(name='Arial', size=7)
+					else:
+						if i == 21:
+							if row[i] == 'NO':
+								ws.cell(row=14 + j, column=10).value = 'Sí'
+							else:
+								ws.cell(row=14 + j, column=10).value = 'No'
+						if i > 21 and row[21] == 'SI':
+							if row[i] is not None and len(row[i]) > 0:
+								lista_razones.append(row[i])
+				if row[21] == 'SI' and len(lista_razones) > 0:
+					ws.cell(row=14 + j, column=11).value = ", ".join(lista_razones)
+				if row[21] == 'NO':
+					ws.cell(row=14 + j, column=11).value = ' '
+			if P_COD == 'UDI':
+				for i in range(0, len(row)):
 					valor = row[i]
 					if i == 2:
 						valor = getTipoSubBono(row[i])
-					ws.cell(row=14 + j, column=i + 1+aux).value = valor
-					ws.cell(row=14 + j, column=i + 1+aux).alignment = Alignment(horizontal="center",vertical="center")
+					ws.cell(row=14 + j, column=i + 1 ).value = valor
+					ws.cell(row=14 + j, column=i + 1 ).alignment = Alignment(horizontal="center",vertical="center")
 					if len(str(valor)) > 17:
-						ws.cell(row=14 + j, column=i + 1+aux).font = Font(name='Arial', size=8)
+						ws.cell(row=14 + j, column=i + 1 ).font = Font(name='Arial', size=8)
 						if len(str(valor)) > 25:
-							ws.cell(row=14 + j, column=i + 1+aux).font = Font(name='Arial', size=7)
-				else:
-					if i == 21:
-						if row[i] == 'NO':
-							ws.cell(row=14 + j, column=10).value = 'Sí'
-						else:
-							ws.cell(row=14 + j, column=10).value = 'No'
-					if i > 21 and row[21] == 'SI':
-						if row[i] is not None and len(row[i]) > 0:
-							lista_razones.append(row[i])
-			if row[21] == 'SI' and len(lista_razones) > 0:
-				ws.cell(row=14 + j, column=11).value = ", ".join(lista_razones)
-			if row[21] == 'NO':
-				ws.cell(row=14 + j, column=11).value = ' '
+							ws.cell(row=14 + j, column=i + 1 ).font = Font(name='Arial', size=7)
 			j += 1
 		#cursors[1].close()
 		if not has_data:

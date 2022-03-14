@@ -185,5 +185,45 @@ async def comisiones_promotores_pdf():
 		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
 
 
+
+@app.route(context_path + '/udi/bonos/excel', methods=['GET'])
+async def bono_udi_xlsx():
+	P_Clave = request.args['codigo']
+	P_Feini = request.args['desde']
+	P_Fefin = request.args['hasta']
+	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
+	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
+	try:
+		estado,mensaje,file, filemime, filename = await bonos_xlx(P_Clave, P_Feini, P_Fefin, 'UDI',app)
+
+		if not estado:
+			return make_response(jsonify(succes=False, message=mensaje), 400)
+		return Response(file, mimetype=filemime,
+						headers={"Content-Disposition": "attachment;filename=" + filename})
+	except Exception as ex:
+		app.logger.error(ex)
+		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
+
+
+@app.route(context_path + '/udi/bonos/pdf', methods=['GET'])
+async def bono_udi_pdf():
+	P_Clave = request.args['codigo']
+	P_Feini = request.args['desde']
+	P_Fefin = request.args['hasta']
+	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
+	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
+	try:
+		estado,mensaje,file, filemime, filename = await bonos_pdf(P_Clave, P_Feini, P_Fefin, 'UDI',app)
+
+		if not estado:
+			return make_response(jsonify(succes=False, message=mensaje), 400)
+		return Response(file, mimetype=filemime,
+						headers={"Content-Disposition": "attachment;filename=" + filename})
+	except Exception as ex:
+		app.logger.error(ex)
+		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
+
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=SERVER_PORT)
