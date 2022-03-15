@@ -130,23 +130,31 @@ def getTipoSubBono(id):
 
 
 def getTableNamesComisiones(tabla):
-	nombre=""
+	nombre=[]
 	if tabla == 1:
-		return "TOTAL DE PERCEPCIONES MENSUALES"
+		return ["TOTAL DE PERCEPCIONES", "MENSUALES"]
 	if tabla == 2:
-		return "TOTAL DE PERCEPCIONES ACUMULADO ANUAL"
-	if tabla in [3,5]:
-		return "DAÑOS MONEDA MXP"
-	if tabla in [4,6]:
-		return "DAÑOS MONEDA USD"
-	if tabla in [9,7]:
-		return "VIDA MONEDA MXP"
-	if tabla in [10,8]:
-		return "VIDA MONEDA USD"
+		return ["TOTAL DE PERCEPCIONES","ACUMULADO ANUAL"]
+	if tabla == 3:
+		return ["DAÑOS MONEDA","MXP"]
+	if tabla  == 4:
+		return ["DAÑOS MONEDA","USD"]
+	if tabla == 5:
+		return ["DAÑOS MONEDA MXP"]
+	if tabla == 6:
+		return ["DAÑOS MONEDA USD"]
+	if tabla == 7:
+		return ["VIDA MONEDA MXP"]
+	if tabla == 8:
+		return ["VIDA MONEDA USD"]
+	if tabla == 9:
+		return ["VIDA MONEDA","MXP"]
+	if tabla == 10:
+		return ["VIDA MONEDA","USD"]
 	if tabla == 11:
-		return "RESUMEN DE DEPOSITOS EN MXP"
+		return ["RESUMEN DE DEPOSITOS EN MXP"]
 	if tabla == 12:
-		return "RESUMEN DE DEPOSITOS EN USD"
+		return ["RESUMEN DE DEPOSITOS EN USD"]
 	return nombre
 
 
@@ -340,3 +348,12 @@ def getheaderpdf(tipo,lista_aux,reporte):
 				("Hasta:", lista_aux[10], "   ", "Clave de productor:", lista_aux[6]),
 				("Fecha de Preliquidación:", lista_aux[11], "   ", "Cuenta bancaria dada de alta:", lista_aux[7]),
 				("   ", "   ", "   ", "   ", "   ")]
+
+def getcolumnstosum(c_count):
+	if c_count in [5, 6, 7, 8]:
+		return [8,9,11,12,13]
+	if c_count in [1, 2]:
+		return [1,2,3,4,5,6,7]
+	if c_count in [11, 12]:
+		return [1,2,3,6,7,8]
+	return 0

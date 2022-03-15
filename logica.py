@@ -6,7 +6,7 @@ from openpyxl.styles.borders import Border, Side
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import landscape
-from reportlab.lib.units import mm
+from reportlab.lib.units import mm,inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 import string
 import time
@@ -14,6 +14,7 @@ from io import BytesIO
 import cx_Oracle
 import os
 from dotenv import load_dotenv
+from apoyo import getcolumnstosum
 from apoyo import getHeadColumnsBonos
 from apoyo import getHeadColumnsComisones
 from apoyo import getTipoSubBono
@@ -281,7 +282,6 @@ async def tasks(app,number,P_COD, tipo, P_Clave, P_Feini, P_Fefin,pool):
 
 async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 	try:
-		print("Estado de cuentas de Comisiones PDF")
 		app.logger.info("Entrando a Estado de cuentas de Comisiones PDF (" + P_COD + ")")
 		con_est, con_mssg, pool = await get_oracle_pool(app)
 		if not con_est:
@@ -308,22 +308,25 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			app.logger.error("La cabecera volvio vacia.")
 			return False, 'Identificador no encontrado', 0, 0,0
 		header_all = getheaderpdf(P_COD,lista_aux,'COMISIONES')
-		grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
+		grid = [('FONTNAME', (0, 0), (-1,-1), 'Courier-Bold')]
 		tbl = Table(header_all)
 		tbl.setStyle(grid)
 		flowables.append(tbl)
 		del cursors[0]
 		c_count = 1
+		empty_cursors = []
 		tblstyle = TableStyle(
 			[('GRID', (0, 0), (-1,-1), 0.25, colors.gray), ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-			 ('FONTSIZE', (0, 0), (0, 0), 7)])
+			 ('FONTSIZE', (0, 0), (0, 0), 7),('ALIGN', (0,0), (-1,-1), 'CENTER')])
 		for cursor in cursors:
 			app.logger.info(f"Leyendo cursor -> ({c_count})")
 			lista = getHeadColumnsComisones("pdf", c_count)
 			data_cursor = []
-			taux = Table([("", getTableNamesComisiones(c_count), ""), ("", "", "")])
+			theader=[]
+			for item in getTableNamesComisiones(c_count):
+				theader.append([item])
+			taux = Table(theader)
 			taux.setStyle(grid)
-			flowables.append(taux)
 			data_cursor.append(lista)
 			fila_totales = []
 			if c_count  in [5,6,7,8]:
@@ -337,7 +340,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			for row in cursor:
 				lista_aux = []
 				for i in range(0, len(row)):
-					if c_count not in [5,6,7,8]:
+					if c_count in [1,2,3,4,9,10,11,12]:
 						valor = row[i]
 						if c_count in [1,2]:
 							if i != 0:
@@ -381,39 +384,48 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							if i == 15:
 								fila_totales[13] += abs(row[i])
 				data_cursor.append(lista_aux)
-			if c_count in [5,6,7,8]:
-				fila_totales[8] = "{:,.2f}".format(fila_totales[8])
-				fila_totales[9] = "{:,.2f}".format(fila_totales[9])
-				fila_totales[11] = "{:,.2f}".format(fila_totales[11])
-				fila_totales[12] = "{:,.2f}".format(fila_totales[12])
-				fila_totales[13] = "{:,.2f}".format(fila_totales[13])
+			if c_count in [1,2,5, 6, 7, 8,11,12]:
+				for i in range(14):
+					if i in getcolumnstosum(c_count):
+						fila_totales[i] = "{:,.2f}".format(fila_totales[i])
 				data_cursor.append(fila_totales)
-			if c_count in [1,2]:
-				fila_totales[1] = "{:,.2f}".format(fila_totales[1])
-				fila_totales[2] = "{:,.2f}".format(fila_totales[2])
-				fila_totales[3] = "{:,.2f}".format(fila_totales[3])
-				fila_totales[4] = "{:,.2f}".format(fila_totales[4])
-				fila_totales[5] = "{:,.2f}".format(fila_totales[5])
-				fila_totales[6] = "{:,.2f}".format(fila_totales[6])
-				fila_totales[7] = "{:,.2f}".format(fila_totales[7])
-				data_cursor.append(fila_totales)
-			if c_count in [11,12]:
-				fila_totales[1] = "{:,.2f}".format(fila_totales[1])
-				fila_totales[2] = "{:,.2f}".format(fila_totales[2])
-				fila_totales[3] = "{:,.2f}".format(fila_totales[3])
-				fila_totales[6] = "{:,.2f}".format(fila_totales[6])
-				fila_totales[7] = "{:,.2f}".format(fila_totales[7])
-				fila_totales[7] = "{:,.2f}".format(fila_totales[8])
-				data_cursor.append(fila_totales)
+			if len(data_cursor)<=2:
+				empty_cursors.append(c_count)
 			tbl = Table(data_cursor)
 			tbl.setStyle(tblstyle)
-			flowables.append(tbl)
-			flowables.append(Table([("", " ", ""), ("", "", "")]))
+			if c_count in [1,2,3,4,9,10]:
+				data = [[taux, tbl]]
+				shell_table = Table(data,colWidths=[50*mm,100*mm],style=TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
+				flowables.append(shell_table)
+			else:
+				flowables.append(tbl)
 			c_count += 1
-			#cursor.close()
-		# fin de bloque
 		app.logger.info("Construyendo reporte pdf.")
-		doc.build(flowables,canvasmaker=PageNumCanvas)
+		newflow=[]
+		for i in range(13):
+			if i==0:
+				newflow.append(flowables[0])
+			if i in [5,6,7,8,11,12]:
+				theader = []
+				theader.append(getTableNamesComisiones(i))
+				taux = Table(theader)
+				taux.setStyle(grid)
+				if i not in empty_cursors:
+					newflow.append(taux)
+					newflow.append(Table([("", " ", "")]))
+					newflow.append(flowables[i])
+			if i in [1,3,9]:
+				if i not in empty_cursors and i+1 not in empty_cursors:
+					shell_table = Table([[flowables[i], flowables[i+1]]],style=TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
+					newflow.append(shell_table)
+				else:
+					if i not in empty_cursors:
+						newflow.append(flowables[i])
+					if i+1 not in empty_cursors:
+						newflow.append(flowables[i+1])
+			if i not in [2,4,10]:
+				newflow.append(Table([("", " ", ""), ("", "", "")]))
+		doc.build(newflow,canvasmaker=PageNumCanvas)
 		return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
 	except Exception as ex:
 		app.logger.error(ex)
