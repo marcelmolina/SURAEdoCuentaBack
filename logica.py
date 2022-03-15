@@ -1,3 +1,5 @@
+import datetime
+
 import openpyxl as opyxl
 from openpyxl.styles import PatternFill
 from openpyxl.styles import Font
@@ -7,9 +9,10 @@ from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import landscape
 from reportlab.lib.units import mm,inch
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image
 import string
 import time
+from reportlab.pdfbase import pdfmetrics, ttfonts
 from io import BytesIO
 import cx_Oracle
 import os
@@ -282,6 +285,8 @@ async def tasks(app,number,P_COD, tipo, P_Clave, P_Feini, P_Fefin,pool):
 
 async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 	try:
+		pdfmetrics.registerFont(ttfonts.TTFont("Arial", "Arial.ttf"))
+		pdfmetrics.registerFont(ttfonts.TTFont("Arial_Bold", "Arial_Bold.ttf"))
 		app.logger.info("Entrando a Estado de cuentas de Comisiones PDF (" + P_COD + ")")
 		con_est, con_mssg, pool = await get_oracle_pool(app)
 		if not con_est:
@@ -296,7 +301,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.pdf'
 
 		virtual_wb = BytesIO()
-		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((432*mm, 546*mm)))
+		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((475*mm, 600*mm)),topMargin=45*mm)
 		flowables = []
 		app.logger.info("Leyendo cursor de cabecera")
 		for row in cursors[0]:
@@ -308,17 +313,21 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			app.logger.error("La cabecera volvio vacia.")
 			return False, 'Identificador no encontrado', 0, 0,0
 		header_all = getheaderpdf(P_COD,lista_aux,'COMISIONES')
-		grid = [('FONTNAME', (0, 0), (-1,-1), 'Courier-Bold')]
+		grid = [('FONTNAME', (0, 0), (-1,-1), 'Arial_Bold'), ('ALIGN', (0, 0), (-1, -1), 'LEFT')]
+		grid2 = [('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+				 ('FONTNAME',  (1, 0), (1, -1), 'Arial_Bold'),
+				 ('FONTNAME',  (4, 0), (4, -1), 'Arial_Bold')]
 		tbl = Table(header_all)
-		tbl.setStyle(grid)
+		tbl.setStyle(grid2)
 		flowables.append(tbl)
 		del cursors[0]
 		c_count = 1
 		empty_cursors = []
-		tblstyle = TableStyle(
-			[('GRID', (0, 0), (-1,-1), 0.25, colors.gray), ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-			 ('FONTSIZE', (0, 0), (0, 0), 7),('ALIGN', (0,0), (-1,-1), 'CENTER')])
+		#,('FONTSIZE', (0, 0), (0, 0), 7)
+
 		for cursor in cursors:
+			tblstyle = TableStyle(
+				[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
 			app.logger.info(f"Leyendo cursor -> ({c_count})")
 			lista = getHeadColumnsComisones("pdf", c_count)
 			data_cursor = []
@@ -336,8 +345,19 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			if c_count in [3,4,9,10]:
 				fila_totales= ["TOTAL",0]
 			if c_count in [11,12]:
-				fila_totales= ["TOTAL",0,0,0," ","TOTA PAGADO",0,0,0]
+				fila_totales= ["TOTAL",0,0,0," ","TOTAL PAGADO",0,0,0]
+			numrow=1
+			tblstyle.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
+			tblstyle.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
+			tblstyle.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
 			for row in cursor:
+				vcolor='#e2e4e4'
+				if numrow % 2 == 0:
+					vcolor='#e8eaea'
+				tblstyle.add('BACKGROUND', (0, numrow), (-1, numrow), vcolor)
+				tblstyle.add('TEXTCOLOR', (0, numrow), (-1, numrow), colors.black)
+				tblstyle.add('FONTNAME', (0, numrow), (-1, numrow), 'Arial')
+				numrow += 1
 				lista_aux = []
 				for i in range(0, len(row)):
 					if c_count in [1,2,3,4,9,10,11,12]:
@@ -389,13 +409,19 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					if i in getcolumnstosum(c_count):
 						fila_totales[i] = "{:,.2f}".format(fila_totales[i])
 				data_cursor.append(fila_totales)
+				vcolor = '#e2e4e4'
+				if numrow % 2 == 0:
+					vcolor = '#e8eaea'
+				tblstyle.add('BACKGROUND', (0, numrow), (-1, numrow), vcolor)
+				tblstyle.add('TEXTCOLOR', (0, numrow), (-1, numrow), colors.black)
+				tblstyle.add('FONTNAME', (0, numrow), (-1, numrow), 'Arial')
 			if len(data_cursor)<=2:
 				empty_cursors.append(c_count)
-			tbl = Table(data_cursor)
+			tbl = Table(data_cursor,hAlign='LEFT')
 			tbl.setStyle(tblstyle)
 			if c_count in [1,2,3,4,9,10]:
 				data = [[taux, tbl]]
-				shell_table = Table(data,colWidths=[50*mm,100*mm],style=TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
+				shell_table = Table(data,colWidths=[60*mm,100*mm],style=TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
 				flowables.append(shell_table)
 			else:
 				flowables.append(tbl)
@@ -408,23 +434,26 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			if i in [5,6,7,8,11,12]:
 				theader = []
 				theader.append(getTableNamesComisiones(i))
-				taux = Table(theader)
+				taux = Table(theader,hAlign='LEFT')
 				taux.setStyle(grid)
 				if i not in empty_cursors:
 					newflow.append(taux)
 					newflow.append(Table([("", " ", "")]))
 					newflow.append(flowables[i])
+					newflow.append(Table([("", " ", ""), ("", "", "")]))
 			if i in [1,3,9]:
 				if i not in empty_cursors and i+1 not in empty_cursors:
 					shell_table = Table([[flowables[i], flowables[i+1]]],style=TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
 					newflow.append(shell_table)
+					newflow.append(Table([("", " ", ""), ("", "", "")]))
 				else:
 					if i not in empty_cursors:
 						newflow.append(flowables[i])
+						newflow.append(Table([("", " ", ""), ("", "", "")]))
 					if i+1 not in empty_cursors:
 						newflow.append(flowables[i+1])
-			if i not in [2,4,10]:
-				newflow.append(Table([("", " ", ""), ("", "", "")]))
+						newflow.append(Table([("", " ", ""), ("", "", "")]))
+		PageNumCanvas.setReporte(PageNumCanvas,'COMISIONES')
 		doc.build(newflow,canvasmaker=PageNumCanvas)
 		return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
 	except Exception as ex:
@@ -435,6 +464,8 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 	try:
 		app.logger.info("Entrando a Estado de cuentas de Bonos PDF (" + P_COD + ")")
+		pdfmetrics.registerFont(ttfonts.TTFont("Arial", "Arial.ttf"))
+		pdfmetrics.registerFont(ttfonts.TTFont("Arial_Bold", "Arial_Bold.ttf"))
 		con_est, con_mssg, pool = await get_oracle_pool(app)
 		if not con_est:
 			return False, con_mssg, 0, 0, 0
@@ -446,7 +477,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			return False, 'Hubo un error obteniendo la data', 0, 0, 0
 		app.logger.info("Cargados todos los cursores.")
 		virtual_wb = BytesIO()
-		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((432*mm, 546*mm)))
+		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((475*mm, 600*mm)),topMargin=45*mm)
 		flowables = []
 		libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.pdf'
 		app.logger.info("Leyendo cursor de cabecera")
@@ -460,9 +491,12 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			app.logger.error("La cabecera volvio vacia.")
 			return False, 'Identificador no encontrado', 0, 0,0
 		header_all = getheaderpdf(P_COD,lista_aux,'BONOS')
-		grid = [('FONTNAME', (0, 0), (-1,0), 'Courier-Bold')]
+		grid = [('FONTNAME', (0, 0), (-1, -1), 'Arial_Bold'), ('ALIGN', (0, 0), (-1, -1), 'LEFT')]
+		grid2 = [('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+				 ('FONTNAME', (1, 0), (1, -1), 'Arial_Bold'),
+				 ('FONTNAME', (4, 0), (4, -1), 'Arial_Bold')]
 		tbl = Table(header_all)
-		tbl.setStyle(grid)
+		tbl.setStyle(grid2)
 		flowables.append(tbl)
 
 		j = 0
@@ -474,7 +508,20 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			lista_aux.append(item)
 		data_body.append(lista_aux)
 		app.logger.info("Leyendo cursor -> (1)")
+		numrow = 1
+		tblstyle = TableStyle(
+			[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+		tblstyle.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
+		tblstyle.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
+		tblstyle.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
 		for row in cursors[1]:
+			vcolor = '#e2e4e4'
+			if numrow % 2 == 0:
+				vcolor = '#e8eaea'
+			tblstyle.add('BACKGROUND', (0, numrow), (-1, numrow), vcolor)
+			tblstyle.add('TEXTCOLOR', (0, numrow), (-1, numrow), colors.black)
+			tblstyle.add('FONTNAME', (0, numrow), (-1, numrow), 'Arial')
+			numrow += 1
 			has_data=True
 			lista_aux = []
 			for i in range(0, len(row)):
@@ -493,10 +540,9 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			app.logger.error("La tabla de detalle volvio vacia.")
 			return False, 'Error generando el reporte.', 0, 0,0
 		tbl = Table(data_body)
-		tblstyle = TableStyle([('GRID',(0,0),(-1,-1),0.25,colors.gray),('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),('FONTSIZE', (0, 0), (0, 0), 7)])
 		tbl.setStyle(tblstyle)
 		flowables.append(tbl)
-
+		PageNumCanvas.setReporte(PageNumCanvas,'BONOS')
 		app.logger.info("Construyendo reporte pdf.")
 		doc.build(flowables,canvasmaker=PageNumCanvas)
 		return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
@@ -629,6 +675,9 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 
 
 class PageNumCanvas(canvas.Canvas):
+	reporte = ""
+	def setReporte(self,val):
+		self.reporte = val
 	def __init__(self, *args, **kwargs):
 		"""Constructor"""
 		canvas.Canvas.__init__(self, *args, **kwargs)
@@ -650,5 +699,19 @@ class PageNumCanvas(canvas.Canvas):
 
 	def draw_page_number(self, page_count):
 		page = "Pagina %s de %s" % (self._pageNumber, page_count)
-		self.setFont("Helvetica", 11)
-		self.drawRightString(480 * mm, 420 * mm, page)
+		self.setFont("Arial", 11)
+		self.drawRightString((600 - 25) * mm, (475 - 23) * mm, "Blvd. Adolfo López Mateos No. 2448 / Col. Alta Vista Deleg. Alvaro Obregón / C. P. 01060 México, D. F.")
+		self.drawRightString((600 - 25) * mm, (475 - 31) * mm, "STel. 57-23-79-99, 01-800-723-79-00")
+		self.setFont("Arial_Bold", 11)
+		self.drawRightString((600 - 25) * mm, (475 - 15) * mm, "Seguros SURA, S. A. de C. V.")
+		self.setFont("Arial", 11)
+		self.setFillColor(colors.gray)
+		self.drawRightString((600 - 25) * mm, (475 - 455) * mm, page)
+		self.drawRightString((600 - 515) * mm, (475-455) * mm, f"Generado el {datetime.datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+		im = Image('logo_sura.png')
+		im.drawOn(self,30*mm,(475-40)*mm)
+		self.setFillColor('#10b0c2')
+		self.setFont("Arial_Bold", 25)
+		self.drawString((600 - 480) * mm, (475 - 18) * mm, "ESTADO DE CUENTA")
+		self.setFillColor('#2e3a8f')
+		self.drawString((600 - 480) * mm, (475 - 29) * mm, "DE "+self.reporte)
