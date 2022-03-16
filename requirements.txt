@@ -1,9 +1,10 @@
+
 click==8.0.4
 colorama==0.4.4
 cx-Oracle==8.3.0
 cx-Oracle-async==0.3.2
 et-xmlfile==1.1.0
-Flask==2.0.3
+Flask==2.0.3[async]
 Flask-Cors==3.0.10
 itsdangerous==2.1.0
 Jinja2==3.0.3
