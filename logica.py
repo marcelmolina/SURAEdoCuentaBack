@@ -526,11 +526,16 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			lista_aux = []
 			for i in range(0, len(row)):
 				if P_COD in ["A", "P"]:
-					if i < 21 and i not in [3,8,19]:
+					if i < 21 and i not in [3,8,9,19]:
 						if i == 2:
 							lista_aux.append(getTipoSubBono(row[i]))
 						else:
 							lista_aux.append(row[i])
+					if i==9:
+						if row[21]== 'NO':
+							lista_aux.append("Si")
+						if row[21]== 'SI':
+							lista_aux.append("No")
 				if P_COD == 'UDI':
 					if i not in [1,2,16]:
 						lista_aux.append(row[i])
