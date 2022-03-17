@@ -133,29 +133,25 @@ def getTipoSubBono(id):
 def getTableNamesComisiones(tabla):
 	nombre=[]
 	if tabla == 1:
-		return ["TOTAL DE PERCEPCIONES", "MENSUALES"]
+		return "TOTAL DE PERCEPCIONES MENSUALES"
 	if tabla == 2:
-		return ["TOTAL DE PERCEPCIONES","ACUMULADO ANUAL"]
-	if tabla == 3:
-		return ["DAÑOS MONEDA","MXP"]
-	if tabla  == 4:
-		return ["DAÑOS MONEDA","USD"]
-	if tabla == 5:
-		return ["DAÑOS MONEDA MXP"]
-	if tabla == 6:
-		return ["DAÑOS MONEDA USD"]
-	if tabla == 7:
-		return ["VIDA MONEDA MXP"]
-	if tabla == 8:
-		return ["VIDA MONEDA USD"]
-	if tabla == 9:
-		return ["VIDA MONEDA","MXP"]
-	if tabla == 10:
-		return ["VIDA MONEDA","USD"]
+		return "TOTAL DE PERCEPCIONES ACUMULADO ANUAL"
+	if tabla in [3,4]:
+		return "CONCEPTOS DE DAÑOS"
+	if tabla in [5]:
+		return "DAÑOS MONEDA MXP"
+	if tabla in [6]:
+		return "DAÑOS MONEDA USD"
+	if tabla in [7]:
+		return "VIDA MONEDA MXP"
+	if tabla in [8]:
+		return "VIDA MONEDA USD"
+	if tabla in [9,10]:
+		return "CONCEPTOS DE VIDA"
 	if tabla == 11:
-		return ["RESUMEN DE DEPOSITOS EN MXP"]
+		return "RESUMEN DE DEPOSITOS EN MXP"
 	if tabla == 12:
-		return ["RESUMEN DE DEPOSITOS EN USD"]
+		return "RESUMEN DE DEPOSITOS EN USD"
 	return nombre
 
 
@@ -358,3 +354,23 @@ def getcolumnstosum(c_count):
 	if c_count in [11, 12]:
 		return [1,2,3,6,7,8]
 	return 0
+
+
+def getheaderforcompressed(lista,listab):
+	listaresp = []
+	len_lista=len(lista)
+	len_listab=len(listab)
+	mayor = len_lista
+	if len_listab>len_lista:
+		mayor=len_listab
+	for i in range(mayor):
+		if i<len_lista:
+			vaux=lista[i][0]
+			if vaux not in listaresp:
+				listaresp.append(vaux)
+		if i < len_listab:
+			vaux = listab[i][0]
+			if vaux not in listaresp:
+				listaresp.append(vaux)
+	listaresp[0]= 'Moneda'
+	return listaresp

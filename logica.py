@@ -17,6 +17,7 @@ from io import BytesIO
 import cx_Oracle
 import os
 from dotenv import load_dotenv
+from apoyo import getheaderforcompressed
 from apoyo import getcolumnstosum
 from apoyo import getHeadColumnsBonos
 from apoyo import getHeadColumnsComisones
@@ -317,14 +318,30 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		grid2 = [('ALIGN', (0, 0), (-1, -1), 'LEFT'),
 				 ('FONTNAME',  (1, 0), (1, -1), 'Arial_Bold'),
 				 ('FONTNAME',  (4, 0), (4, -1), 'Arial_Bold')]
-		tbl = Table(header_all)
-		tbl.setStyle(grid2)
-		flowables.append(tbl)
+		tbl_header = Table(header_all, hAlign='LEFT')
+		tbl_header.setStyle(grid2)
+		#flowables.append(tbl)
 		del cursors[0]
 		c_count = 1
 		empty_cursors = []
 		#,('FONTSIZE', (0, 0), (0, 0), 7)
-
+		data_for_f_new_table=[]
+		data_for_s_new_table = []
+		data_for_t_new_table = []
+		styl_new_count = 0
+		style_newx2 = TableStyle(
+			[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+		style_newx2.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
+		style_newx2.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
+		style_newx2.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
+		style_newx2.add('BACKGROUND', (0, 1), (-1, 1), '#e8eaea')
+		style_newx2.add('TEXTCOLOR', (0, 1), (-1, 1), colors.black)
+		style_newx2.add('FONTNAME', (0, 1), (-1, 1), 'Arial')
+		style_newx2.add('BACKGROUND', (0, 2), (-1, 2), '#e2e4e4')
+		style_newx2.add('TEXTCOLOR', (0, 2), (-1, 2), colors.black)
+		style_newx2.add('FONTNAME', (0, 2), (-1, 2), 'Arial')
+		style_for_f_new_table=TableStyle(
+				[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
 		for cursor in cursors:
 			tblstyle = TableStyle(
 				[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
@@ -332,9 +349,8 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			lista = getHeadColumnsComisones("pdf", c_count)
 			data_cursor = []
 			theader=[]
-			for item in getTableNamesComisiones(c_count):
-				theader.append([item])
-			taux = Table(theader)
+			theader.append([getTableNamesComisiones(c_count)])
+			taux = Table(theader,hAlign='LEFT')
 			taux.setStyle(grid)
 			data_cursor.append(lista)
 			fila_totales = []
@@ -404,6 +420,10 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							if i == 15:
 								fila_totales[13] += abs(row[i])
 				data_cursor.append(lista_aux)
+			if c_count in [3,9]:
+				data_for_s_new_table= list(data_cursor)
+			if c_count in [4,10]:
+				data_for_t_new_table= list(data_cursor)
 			if c_count in [1,2,5, 6, 7, 8,11,12]:
 				for i in range(14):
 					if i in getcolumnstosum(c_count):
@@ -415,46 +435,84 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				tblstyle.add('BACKGROUND', (0, numrow), (-1, numrow), vcolor)
 				tblstyle.add('TEXTCOLOR', (0, numrow), (-1, numrow), colors.black)
 				tblstyle.add('FONTNAME', (0, numrow), (-1, numrow), 'Arial')
-			if len(data_cursor)<=2:
+			if len(data_cursor) <= 2:
 				empty_cursors.append(c_count)
 			tbl = Table(data_cursor,hAlign='LEFT')
 			tbl.setStyle(tblstyle)
-			if c_count in [1,2,3,4,9,10]:
-				data = [[taux, tbl]]
-				shell_table = Table(data,colWidths=[60*mm,100*mm],style=TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
+			if c_count in [1, 2]:
+				#desarrollo de unir dos tablas
+				style_for_f_new_table.add('SPAN', (0, styl_new_count), (7, styl_new_count))
+				style_for_f_new_table.add('FONTNAME', (0, styl_new_count), (-1, styl_new_count), 'Arial_Bold')
+				style_for_f_new_table.add('TEXTCOLOR', (0, styl_new_count), (-1, styl_new_count), colors.black)
+				data_for_f_new_table.append([getTableNamesComisiones(c_count),' ',' ',' ',' ',' ',' ',' '])
+				styl_new_count += 1
+				first=True
+				for row in data_cursor:
+					if first:
+						first=False
+						style_for_f_new_table.add('FONTNAME', (0, styl_new_count), (-1, styl_new_count), 'Arial_Bold')
+						style_for_f_new_table.add('TEXTCOLOR', (0, styl_new_count), (-1, styl_new_count), colors.white)
+						style_for_f_new_table.add('BACKGROUND', (0, styl_new_count), (-1, styl_new_count), '#10b0c2')
+					else:
+						tcolor = '#e2e4e4'
+						if styl_new_count % 2 == 0:
+							tcolor = '#e8eaea'
+						style_for_f_new_table.add('BACKGROUND', (0, styl_new_count), (-1, styl_new_count), tcolor)
+						style_for_f_new_table.add('TEXTCOLOR', (0, styl_new_count), (-1, styl_new_count), colors.black)
+						style_for_f_new_table.add('FONTNAME', (0, styl_new_count), (-1, styl_new_count), 'Arial')
+					styl_new_count += 1
+					data_for_f_new_table.append(row)
+			if c_count ==2:
+				tbl = Table(data_for_f_new_table)
+				tbl.setStyle(style_for_f_new_table)
+				data = [[tbl_header, tbl]]
+				shell_table = Table(data,hAlign='LEFT',colWidths=[350*mm,200*mm])
 				flowables.append(shell_table)
-			else:
-				flowables.append(tbl)
+				flowables.append(Table([("", " ", ""), ("", "", "")]))
+			if c_count in [4,10]:
+				#necesito el header nuevo
+				lista_new_data=[]
+				list_header=getheaderforcompressed(data_for_s_new_table,data_for_t_new_table)
+				lista_new_data.append(list_header)
+				aux_list_1=[]
+				aux_list_1.append('MXP')
+				aux_list_2 = []
+				aux_list_2.append('USD')
+				for i in range(len(list_header)):
+					if i>0:
+						entro = False
+						for couple in data_for_s_new_table:
+							if couple[0] == list_header[i]:
+								entro=True
+								aux_list_1.append(couple[1])
+						if not entro:
+							aux_list_1.append("0.00")
+						entro = False
+						for couple in data_for_t_new_table:
+							if couple[0] == list_header[i]:
+								entro = True
+								aux_list_2.append(couple[1])
+						if not entro:
+							aux_list_2.append("0.00")
+				lista_new_data.append(aux_list_1)
+				lista_new_data.append(aux_list_2)
+				tbl = Table(lista_new_data, hAlign='LEFT')
+				tbl.setStyle(style_newx2)
+				if c_count-1 not in empty_cursors or c_count not in empty_cursors:
+					flowables.append(taux)
+					flowables.append(Table([("", " ", "")]))
+					flowables.append(tbl)
+					flowables.append(Table([("", " ", ""), ("", "", "")]))
+			if c_count in [5,6,7,8,11,12]:
+				if c_count not in empty_cursors:
+					flowables.append(taux)
+					flowables.append(Table([("", " ", "")]))
+					flowables.append(tbl)
+					flowables.append(Table([("", " ", ""), ("", "", "")]))
 			c_count += 1
 		app.logger.info("Construyendo reporte pdf.")
-		newflow=[]
-		for i in range(13):
-			if i==0:
-				newflow.append(flowables[0])
-			if i in [5,6,7,8,11,12]:
-				theader = []
-				theader.append(getTableNamesComisiones(i))
-				taux = Table(theader,hAlign='LEFT')
-				taux.setStyle(grid)
-				if i not in empty_cursors:
-					newflow.append(taux)
-					newflow.append(Table([("", " ", "")]))
-					newflow.append(flowables[i])
-					newflow.append(Table([("", " ", ""), ("", "", "")]))
-			if i in [1,3,9]:
-				if i not in empty_cursors and i+1 not in empty_cursors:
-					shell_table = Table([[flowables[i], flowables[i+1]]],style=TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
-					newflow.append(shell_table)
-					newflow.append(Table([("", " ", ""), ("", "", "")]))
-				else:
-					if i not in empty_cursors:
-						newflow.append(flowables[i])
-						newflow.append(Table([("", " ", ""), ("", "", "")]))
-					if i+1 not in empty_cursors:
-						newflow.append(flowables[i+1])
-						newflow.append(Table([("", " ", ""), ("", "", "")]))
 		PageNumCanvas.setReporte(PageNumCanvas,'COMISIONES')
-		doc.build(newflow,canvasmaker=PageNumCanvas)
+		doc.build(flowables,canvasmaker=PageNumCanvas)
 		return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
 	except Exception as ex:
 		app.logger.error(ex)
