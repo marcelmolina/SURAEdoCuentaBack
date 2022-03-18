@@ -11,7 +11,8 @@ from reportlab.lib.pagesizes import landscape
 from reportlab.lib.units import mm,inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image
 import string
-import time
+from pytz import timezone
+
 from reportlab.pdfbase import pdfmetrics, ttfonts
 from io import BytesIO
 import cx_Oracle
@@ -166,7 +167,7 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				ws.cell(row=f, column=j + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
 															 top=Side(style='thin'), bottom=Side(style='thin'))
 				ws.cell(row=f, column=j + 1).fill = greyFill
-				ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True)
+				ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True,color='ffffff')
 				ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
 				columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
 				multiplicador = 2
@@ -437,7 +438,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				tblstyle.add('FONTNAME', (0, numrow), (-1, numrow), 'Arial')
 			if len(data_cursor) <= 2:
 				empty_cursors.append(c_count)
-			tbl = Table(data_cursor,hAlign='LEFT')
+			tbl = Table(data_cursor,hAlign='LEFT',repeatRows=1)
 			tbl.setStyle(tblstyle)
 			if c_count in [1, 2]:
 				#desarrollo de unir dos tablas
@@ -524,22 +525,28 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		app.logger.info("Entrando a Estado de cuentas de Bonos PDF (" + P_COD + ")")
 		pdfmetrics.registerFont(ttfonts.TTFont("Arial", "Arial.ttf"))
 		pdfmetrics.registerFont(ttfonts.TTFont("Arial_Bold", "Arial_Bold.ttf"))
-		con_est, con_mssg, pool = await get_oracle_pool(app)
+		con_est, con_mssg, connection = getconexion(app)
 		if not con_est:
-			return False, con_mssg, 0, 0, 0
+			return False, con_mssg, 0, 0
 		app.logger.info("Conectado a la base de datos.")
-		has_agent = False
 		app.logger.info("Iniciando carga de cursores")
-		cursors = await tasks(app, 2, P_COD, 'BONO', P_Clave, P_Feini, P_Fefin, pool)
-		if 'Excepcion' in cursors:
-			return False, 'Hubo un error obteniendo la data', 0, 0, 0
+
+		query1 = getquery(P_COD, 'BONO', 0, P_Clave, P_Feini, P_Fefin)
+		cur1 = connection.cursor()
+		cur1.execute(query1)
+		statement = connection.cursor()
+		c_det = connection.cursor()
+		statement.execute("begin  PKG_MUI_ESTADOS_DE_CUENTA_1.P_DET_PADRE( :Pb_CODIGO,:Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_det  ); end;",
+			c_det = c_det,  Pb_CODIGO = str(P_COD) ,Pb_AGENTE = str(P_Clave) ,Pb_FEINI = P_Feini, Pb_FEFIN = P_Fefin)
+
 		app.logger.info("Cargados todos los cursores.")
 		virtual_wb = BytesIO()
 		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((475*mm, 600*mm)),topMargin=45*mm)
 		flowables = []
 		libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.pdf'
 		app.logger.info("Leyendo cursor de cabecera")
-		for row in cursors[0]:
+		has_agent = False
+		for row in cur1:
 			has_agent = True
 			lista_aux = []
 			for i in range(0, len(row)):
@@ -556,7 +563,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		tbl = Table(header_all)
 		tbl.setStyle(grid2)
 		flowables.append(tbl)
-
+		cur1.close()
 		j = 0
 		lista = getHeadColumnsBonos("PDF",P_COD)
 		data_body = []
@@ -572,7 +579,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		tblstyle.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
 		tblstyle.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
 		tblstyle.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
-		for row in cursors[1]:
+		for row in c_det:
 			vcolor = '#e2e4e4'
 			if numrow % 2 == 0:
 				vcolor = '#e8eaea'
@@ -588,7 +595,14 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						if i == 2:
 							lista_aux.append(getTipoSubBono(row[i]))
 						else:
-							lista_aux.append(row[i])
+							if i==20:
+								if row[i] is not None:
+									auxnewdate=datetime.date.strftime(row[i], "%m/%d/%Y")
+									lista_aux.append(auxnewdate)
+								else:
+									lista_aux.append(' ')
+							else:
+								lista_aux.append(row[i])
 					if i==9:
 						if row[21]== 'NO':
 							lista_aux.append("Si")
@@ -598,11 +612,11 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					if i not in [1,2,16]:
 						lista_aux.append(row[i])
 			data_body.append(lista_aux)
-		#cursors[1].close()
+		c_det.close()
 		if not has_data:
 			app.logger.error("La tabla de detalle volvio vacia.")
 			return False, 'Error generando el reporte.', 0, 0,0
-		tbl = Table(data_body)
+		tbl = Table(data_body, repeatRows=1)
 		tbl.setStyle(tblstyle)
 		flowables.append(tbl)
 		PageNumCanvas.setReporte(PageNumCanvas,'BONOS')
@@ -616,15 +630,21 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 	try:
 		app.logger.info("Entrando a Estado de cuentas de Bonos XLSX (" + P_COD + ")")
-		con_est, con_mssg, pool = await get_oracle_pool(app)
+		con_est, con_mssg, connection = getconexion(app)
 		if not con_est:
-			return False, con_mssg, 0, 0, 0
+			return False, con_mssg, 0, 0
 		app.logger.info("Conectado a la base de datos.")
-		has_agent = False
 		app.logger.info("Iniciando carga de cursores")
-		cursors = await tasks(app, 2, P_COD, 'BONO', P_Clave, P_Feini, P_Fefin, pool)
-		if 'Excepcion' in cursors:
-			return False, 'Hubo un error obteniendo la data', 0, 0, 0
+
+		query1 = getquery(P_COD, 'BONO', 0, P_Clave, P_Feini, P_Fefin)
+		cur1 = connection.cursor()
+		cur1.execute(query1)
+		statement = connection.cursor()
+		c_det = connection.cursor()
+		query1 = "begin  PKG_MUI_ESTADOS_DE_CUENTA_1.P_DET_PADRE ( :Pb_CODIGO,:Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_det  ); end;"
+		statement.execute(query1,
+			c_det=c_det, Pb_CODIGO=str(P_COD), Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
+
 		app.logger.info("Cargados todos los cursores.")
 		plantilla = "plantilla_agentes.xlsx"
 		if P_COD == 'P':
@@ -637,18 +657,18 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 
 		libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.xlsx'
 		app.logger.info("Leyendo cursor de cabecera")
-		for row in cursors[0]:
+		for row in cur1:
 			has_agent = True
 			for i in range(0, len(row) - 4):
 				ws.cell(row=4 + i, column=9).value = row[i]
 			for i in range(len(row) - 4, len(row)):
 				ws.cell(row=i, column=4).value = row[i]
-		#cursors[0].close()
+		cur1.close()
 		if not has_agent:
 			app.logger.error("La cabecera volvio vacia.")
 			return False, 'Identificador no encontrado.', 0, 0,0
 		j = 0
-		greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
+		greyFill = PatternFill(fill_type='solid', start_color='10b0c2', end_color='10b0c2')
 		lista = getHeadColumnsBonos("excel",P_COD)
 		alphabet_string = string.ascii_uppercase
 		alphabet_list = list(alphabet_string)
@@ -657,7 +677,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			ws.cell(row=13, column=j + 1).fill = greyFill
 			ws.cell(row=13, column=j + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
 														 top=Side(style='thin'), bottom=Side(style='thin'))
-			ws.cell(row=13, column=j + 1).font = Font(name='Arial', size=9, bold=True)
+			ws.cell(row=13, column=j + 1).font = Font(name='Arial', size=9, bold=True,color='ffffff')
 			ws.cell(row=13, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
 			columna = alphabet_list[ws.cell(row=13, column=j + 1).column - 1]
 			multiplicador = 2
@@ -674,8 +694,11 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		j = 0
 		k = 0
 		has_data = False
+		app.logger.info("intentando fetch cursor -> (1)")
+		data = c_det.fetchall()
+		app.logger.info("logrado fetch cursor -> (1)")
 		app.logger.info("Leyendo cursor -> (1)")
-		for row in cursors[1]:
+		for row in data:
 			has_data = True
 			lista_razones = []
 			if P_COD in ["A","P"]:
@@ -687,7 +710,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							aux = 1
 						valor = row[i]
 						if i == 2:
-							valor = getTipoSubBono(row[i])
+							valor = getTipoSubBono(int(row[i]))
 						ws.cell(row=14 + j, column=i + 1 + aux).value = valor
 						ws.cell(row=14+j, column=i + 1+aux).border = Border(left=Side(style='thin'), right=Side(style='thin'),
 																	 top=Side(style='thin'), bottom=Side(style='thin'))
@@ -724,7 +747,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						if len(str(valor)) > 25:
 							ws.cell(row=14 + j, column=i + 1 ).font = Font(name='Arial', size=7)
 			j += 1
-		#cursors[1].close()
+		c_det.close()
 		if not has_data:
 			app.logger.error("La tabla de detalle volvio vacia.")
 			return False, 'Error en la generacion del reporte.', 0, 0,0
@@ -761,6 +784,8 @@ class PageNumCanvas(canvas.Canvas):
 		canvas.Canvas.save(self)
 
 	def draw_page_number(self, page_count):
+		tahora= datetime.datetime.now(timezone('UTC'))
+		now_mexico = tahora.astimezone(timezone('America/Mexico_City'))
 		page = "Pagina %s de %s" % (self._pageNumber, page_count)
 		self.setFont("Arial", 11)
 		self.drawRightString((600 - 25) * mm, (475 - 23) * mm, "Blvd. Adolfo López Mateos No. 2448 / Col. Alta Vista Deleg. Alvaro Obregón / C. P. 01060 México, D. F.")
@@ -770,7 +795,7 @@ class PageNumCanvas(canvas.Canvas):
 		self.setFont("Arial", 11)
 		self.setFillColor(colors.gray)
 		self.drawRightString((600 - 25) * mm, (475 - 455) * mm, page)
-		self.drawRightString((600 - 515) * mm, (475-455) * mm, f"Generado el {datetime.datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}")
+		self.drawRightString((600 - 515) * mm, (475-455) * mm, f"Generado el {now_mexico.strftime('%m/%d/%Y, %H:%M:%S')}")
 		im = Image('logo_sura.png')
 		im.drawOn(self,30*mm,(475-40)*mm)
 		self.setFillColor('#10b0c2')

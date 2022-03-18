@@ -27,7 +27,7 @@ def getHeadColumnsBonos(extension,tipo):
 		lista.append('# Liquidación')
 		if extension == "excel":
 			lista.append('# Comprobante')
-		lista.append('Fecha Movimiento')
+		lista.append('Fecha aplicación de la póliza')
 
 	if tipo == 'UDI':
 		lista.append('# Bono')
@@ -43,13 +43,13 @@ def getHeadColumnsBonos(extension,tipo):
 		lista.append('# Recibo')
 		lista.append('Prima Total')
 		lista.append('Prima Neta')
-		lista.append('% Bono Pagado')
+		lista.append('% Prestacion de servicio')
 		lista.append('Monto comisión neta')
 		lista.append('Total comisión pagada')
 		lista.append('# Liquidación')
 		if extension == "excel":
 			lista.append('# Comprobante')
-		lista.append('Fecha Movimiento')
+		lista.append('Fecha aplicación de la póliza')
 	return lista
 
 
