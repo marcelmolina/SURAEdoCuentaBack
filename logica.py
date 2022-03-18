@@ -355,11 +355,11 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			taux.setStyle(grid)
 			data_cursor.append(lista)
 			fila_totales = []
-			if c_count  in [5,6,7,8]:
+			if c_count  in [5,6,9,10]:
 				fila_totales = ["", "", "", "", "", "", "", "TOTAL", 0, 0, "", 0, 0, 0, "", ""]
 			if c_count in [1,2]:
 				fila_totales= ["TOTAL",0,0,0,0,0,0,0]
-			if c_count in [3,4,9,10]:
+			if c_count in [3,4,7,8]:
 				fila_totales= ["TOTAL",0]
 			if c_count in [11,12]:
 				fila_totales= ["TOTAL",0,0,0," ","TOTAL PAGADO",0,0,0]
@@ -377,7 +377,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				numrow += 1
 				lista_aux = []
 				for i in range(0, len(row)):
-					if c_count in [1,2,3,4,9,10,11,12]:
+					if c_count in [1,2,3,4,7,8,11,12]:
 						valor = row[i]
 						if c_count in [1,2]:
 							if i != 0:
@@ -386,7 +386,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								else:
 									valor = "{:,.2f}".format(valor)
 								fila_totales[i] += abs(row[i])
-						if c_count in [3,4,9,10]:
+						if c_count in [3,4,7,8]:
 							if i != 0:
 								if valor < 0:
 									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
@@ -421,11 +421,11 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							if i == 15:
 								fila_totales[13] += abs(row[i])
 				data_cursor.append(lista_aux)
-			if c_count in [3,9]:
+			if c_count in [3,7]:
 				data_for_s_new_table= list(data_cursor)
-			if c_count in [4,10]:
+			if c_count in [4,8]:
 				data_for_t_new_table= list(data_cursor)
-			if c_count in [1,2,5, 6, 7, 8,11,12]:
+			if c_count in [1,2,5, 6,9,10,11,12]:
 				for i in range(14):
 					if i in getcolumnstosum(c_count):
 						fila_totales[i] = "{:,.2f}".format(fila_totales[i])
@@ -470,7 +470,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				shell_table = Table(data,hAlign='LEFT',colWidths=[350*mm,200*mm])
 				flowables.append(shell_table)
 				flowables.append(Table([("", " ", ""), ("", "", "")]))
-			if c_count in [4,10]:
+			if c_count in [4,8]:
 				#necesito el header nuevo
 				lista_new_data=[]
 				list_header=getheaderforcompressed(data_for_s_new_table,data_for_t_new_table)
@@ -504,7 +504,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					flowables.append(Table([("", " ", "")]))
 					flowables.append(tbl)
 					flowables.append(Table([("", " ", ""), ("", "", "")]))
-			if c_count in [5,6,7,8,11,12]:
+			if c_count in [5,6,9,10,11,12]:
 				if c_count not in empty_cursors:
 					flowables.append(taux)
 					flowables.append(Table([("", " ", "")]))
