@@ -9,7 +9,7 @@ from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import landscape
 from reportlab.lib.units import mm,inch
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, PageBreak
 import string
 from pytz import timezone
 
@@ -364,7 +364,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		styl_new_count = 0
 
 		style_newx2 = TableStyle(
-			[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+			[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
 		style_newx2.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
 		style_newx2.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
 		style_newx2.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
@@ -375,10 +375,10 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		style_newx2.add('TEXTCOLOR', (0, 2), (-1, 2), colors.black)
 		style_newx2.add('FONTNAME', (0, 2), (-1, 2), 'Arial')
 		style_for_f_new_table=TableStyle(
-				[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+				[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
 		for cursor in cursors:
 			tblstyle = TableStyle(
-				[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+				[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
 			app.logger.info(f"Leyendo cursor -> ({c_count})")
 			lista = getHeadColumnsComisones("pdf", c_count)
 			data_cursor = []
@@ -544,6 +544,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					flowables.append(tbl)
 					flowables.append(Table([("", " ", ""), ("", "", "")]))
 			c_count += 1
+		flowables.append(PageBreak())
 		ramos,ramo_style,bonos,bono_style=get_tablas_referencia()
 		tbl = Table(ramos, hAlign='LEFT')
 		tbl.setStyle(ramo_style)
@@ -611,7 +612,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		app.logger.info("Leyendo cursor -> (1)")
 		numrow = 1
 		tblstyle = TableStyle(
-			[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+			[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
 		tblstyle.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
 		tblstyle.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
 		tblstyle.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
@@ -654,6 +655,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		flowables.append(tbl)
 		flowables.append(Table([("", " ", ""), ("", "", "")]))
 		app.logger.info("Agregando tabla de soporte.")
+		flowables.append(PageBreak())
 		ramos, ramo_style, bonos, bono_style = get_tablas_referencia()
 		tbl = Table(ramos, hAlign='LEFT')
 		tbl.setStyle(ramo_style)
