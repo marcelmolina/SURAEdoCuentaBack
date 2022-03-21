@@ -1,3 +1,6 @@
+from reportlab.lib import colors
+from reportlab.platypus import TableStyle
+
 
 def getHeadColumnsBonos(extension,tipo):
 	lista = []
@@ -71,15 +74,14 @@ def getHeadColumnsComisones(extension,cursor):
 		return lista
 
 	if cursor in [5,6,9,10]:
-		lista.append("Daños/Vida")
-		if extension =="excel":
+		if extension == "excel":
+			lista.append("Daños/Vida")
 			lista.append("Grupo")
 		lista.append("Oficina")
 		lista.append("Ramo")
 		lista.append("Poliza")
 		lista.append("Contratante")
-		if extension == "excel":
-			lista.append("Clave Agente")
+		lista.append("Clave Agente")
 		lista.append("Tipo de Cambio")
 		lista.append("# Recibo")
 		lista.append("Serie de Recibo")
@@ -370,3 +372,75 @@ def getheaderforcompressed(lista,listab):
 				listaresp.append(vaux)
 	listaresp[0]= 'Moneda'
 	return listaresp
+
+
+def get_tablas_referencia():
+	ramos=[]
+	ramo_style=[]
+	bonos = []
+	bono_style=[]
+	#bonos
+	bonos.append(['BONO POR EXCEPCION', ' ', 'BONO POR PORTAFOLIO', ' ','BONO CUADERNILLO', ' ', 'BONO PRESTADOR DE SERVICIO', ' '])
+	bonos.append(['ABREVIATURA', 'TIPO DE BONO', 'ABREVIATURA', 'TIPO DE BONO','ABREVIATURA', 'TIPO DE BONO', 'ABREVIATURA', 'TIPO DE BONO'])
+	bonos.append(['BS', 'BONO SINIESTRALIDAD', 'BC', 'BONO CRECIMIENTO','BP', 'BONO PRODUCCION', 'BP', 'BONO PRODUCCION'])
+	bonos.append(['BP', 'BONO PRODUCCION', 'BP', 'BONO PRODUCCION', 'BS', 'BONO SINIESTRALIDAD', 'BPS', 'BONO PROD+SINIES'])
+	bonos.append(['BPS', 'BONO PROD+SINIES', 'BCS', 'BONO CRECI+SINIES', 'BC', 'BONO CRECIMIENTO', 'BD', 'BONO DERECHOS'])
+	bonos.append([' ', ' ', 'BPS', 'BONO PROD+SINIES', 'BPS', 'BONO PROD+SINIES', ' ', ' '])
+	bonos.append([' ', ' ', 'BS', 'BONO SINIESTRALIDAD','BCS', 'BONO CRECI+SINIES', ' ', ' '])
+	bonos.append([' ', ' ', 'BD', 'BONO DERECHOS',' ', ' ', ' ', ' '])
+
+	bono_style = TableStyle(
+		[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+	bono_style.add('SPAN', (0, 0), (1, 0))
+	bono_style.add('SPAN', (2, 0), (3, 0))
+	bono_style.add('SPAN', (4, 0), (5, 0))
+	bono_style.add('SPAN', (6, 0), (7, 0))
+	bono_style.add('BACKGROUND', (0, 0), (-1, 0), '#008080')
+	bono_style.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
+	bono_style.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
+	bono_style.add('BACKGROUND', (0, 1), (-1, 1), '#10b0c2')
+	bono_style.add('FONTNAME', (0, 1), (-1, 1), 'Arial_Bold')
+	bono_style.add('TEXTCOLOR', (0, 1), (-1, 1), colors.white)
+	for i in range(6):
+		vcolor = '#e8eaea'
+		if i % 2 == 0:
+			vcolor = '#e2e4e4'
+		bono_style.add('BACKGROUND', (0, i + 2), (-1, i + 2), vcolor)
+		bono_style.add('TEXTCOLOR', (0, i + 2), (-1, i + 2), colors.black)
+		bono_style.add('FONTNAME', (0, i + 2), (-1, i + 2), 'Arial')
+	#ramos
+	ramos.append(['CATALOGOS', ' ', ' ', ' ',' ', ' ', ' ', ' '])
+	ramos.append(['CODIGO', 'DESCRIPCION', 'CODIGO', 'DESCRIPCION','CODIGO', 'DESCRIPCION', 'CODIGO', 'DESCRIPCION'])
+	ramos.append(['101', 'INCENDIO', '105', 'TERREMOTO Y ERUPCIÓN VOLCÁNICA', '201', 'AUTOS RESIDENTES', '202', 'CAMIONES'])
+	ramos.append(['203', 'TURISTAS', '204', 'AUTOBUSES', '205', 'MOTOCICLETAS', '206', 'SUVA'])
+	ramos.append(['210', 'PRUEBAS DE AUTOS', '211', 'MOTOR TECHNICAL PRICING', '220', 'TAXIS', '301', 'TRANSPORTES CARGA'])
+	ramos.append(['302', 'TRANSPORTE DE CASCOS MARÍTIMO', '303', 'TRANSPORTES DE CASCOS AVIACIÓN', '400', 'EQUIPO ELECTRÓNICO','401', 'ROTURA DE CRISTALES'])
+	ramos.append(['402', 'OBJETOS PERSONALES', '403','EQUIPO DE CONTRATISTAS', '404', 'ROBO DE MERCANCÍAS', '405','ROTURA DE MAQUINARIA'])
+	ramos.append(['406', 'CALDERAS', '407', 'MONTAJE DE MAQUINARIA', '409', 'DINERO Y VALORES', '410', 'ANUNCIOS LUMINOSOS'])
+	ramos.append(['411', 'OBRA CIVIL', '412', 'PREMIOS', '413', 'OBRA CIVIL TERMINADA', '420', 'MÚLTIPLE FAMILIAR'])
+	ramos.append(['421', 'PROTEGE CREDITOS', '422', 'MÚLTIPLE FAMILIAR', '430', 'MÚLTIPLE EMPRESARIAL', '431','PROTEGE CREDITOS'])
+	ramos.append(['501', 'RESPONSABILIDAD CIVIL GENERAL', '502', 'RESPONSABILIDAD CIVIL FAMILIAR', '503','RESPONSABILIDAD CIVIL VIAJERO', '601', 'ACCIDENTES PERSONALES IND/FAM'])
+	ramos.append(['602', 'ACC. PERSONALES ESCOLAR', '605', 'ACC. PERSONALES COLECTIVO', '606', 'GASTOS MÉDICOS MAYORES IND/FAM','607', 'GASTOS MÉDICOS MAYORES GRUPO'])
+	ramos.append(['608', 'GASTOS MÉDICOS COLECTIVO', '610', 'PROTEGE FAMILIAR IND./FAM.', '701', 'CABALLOS', '702','SEGURO AGRÍCOLA'])
+	ramos.append(['801', 'VIDA PRUEBA', '810', 'VIDA INDIV. MICROSEGURO 1 AÑO', '901', 'VIDA INDIVIDUAL', '902', 'VIDA GRUPO'])
+	ramos.append(['903', 'VIDA COLECTIVO', '905', 'VIDA GRUPO DOTAL', '907', 'GASTOS FUNERARIOS', '908','VIDA GRUPO (SSIT, SSC)'])
+	ramos.append(['909', 'CARTA DE COBERTURA', '931', 'VIDA INDIVIDUAL SURA', '990', 'ASISTENCIA HOGAR', '998','DAÑOS GASTOS FUNERARIOS'])
+	ramos.append(['999', 'TODOS LOS RAMOS', '', '', '', '', '', ''])
+
+	ramo_style = TableStyle(
+		[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+	ramo_style.add('SPAN', (0, 0), (7, 0))
+	ramo_style.add('BACKGROUND', (0, 0), (-1, 0), '#008080')
+	ramo_style.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
+	ramo_style.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
+	ramo_style.add('BACKGROUND', (0, 1), (-1, 1), '#10b0c2')
+	ramo_style.add('FONTNAME', (0, 1), (-1, 1), 'Arial_Bold')
+	ramo_style.add('TEXTCOLOR', (0, 1), (-1, 1), colors.white)
+	for i in range(14):
+		vcolor='#e8eaea'
+		if i %2==0:
+			vcolor='#e2e4e4'
+		ramo_style.add('BACKGROUND', (0, i+2), (-1, i+2), vcolor)
+		ramo_style.add('TEXTCOLOR', (0, i+2), (-1, i+2), colors.black)
+		ramo_style.add('FONTNAME', (0, i+2), (-1, i+2), 'Arial')
+	return ramos,ramo_style,bonos,bono_style

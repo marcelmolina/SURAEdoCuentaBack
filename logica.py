@@ -18,6 +18,7 @@ from io import BytesIO
 import cx_Oracle
 import os
 from dotenv import load_dotenv
+from apoyo import get_tablas_referencia
 from apoyo import getheaderforcompressed
 from apoyo import getcolumnstosum
 from apoyo import getHeadColumnsBonos
@@ -149,7 +150,7 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			return False,'Identificador no encontrado',0,0,0
 		del cursors[0]
 		f = 14  # principal gestor de filas del archivo
-		greyFill = PatternFill(fill_type='solid', start_color='d9d9d9', end_color='d9d9d9')
+		greyFill = PatternFill(fill_type='solid', start_color='10b0c2', end_color='10b0c2')
 		# NUEVO BLOQUE SECUENCIAL
 		c_count = 1
 		for cursor in cursors:
@@ -188,12 +189,12 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			has_data= False
 			for row in cursor:
 				for i in range(0, len(row)):
-					if c_count not in [5, 6, 7, 8]:
+					if c_count not in [5, 6, 9, 10]:
 						valor = row[i]
 						if c_count in [1, 2]:
 							if i != 0:
 								valor = "{:,.2f}".format(valor)
-						if c_count in [3, 4, 9, 10]:
+						if c_count in [3, 4, 7, 8]:
 							if i != 0:
 								valor = "{:,.2f}".format(valor)
 						if c_count in [11, 12]:
@@ -231,7 +232,7 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
 				f += 1
 			#cursor.close()
-			if c_count in [5, 6, 7, 8] and has_data:
+			if c_count in [5, 6, 9, 10] and has_data:
 				fila_totales[0] = "{:,.2f}".format(fila_totales[0])
 				fila_totales[1] = "{:,.2f}".format(fila_totales[1])
 				fila_totales[2] = "{:,.2f}".format(fila_totales[2])
@@ -253,6 +254,37 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			f += 1
 			c_count += 1
 		# fin de bloque
+		f += 2
+		ramos, ramo_style, bonos, bono_style = get_tablas_referencia()
+		t_apoyo = [ramos]
+		for tabla in t_apoyo:
+			c_linea = 0
+			for linea in tabla:
+				c_columna = 0
+				for columna in linea:
+					if c_linea in [0, 1]:
+						if c_linea==0 and c_columna==0:
+							top_1 = ws.cell(row=f, column=1)
+							ws.merge_cells(start_row=f, start_column=1, end_row=f, end_column=8)
+							top_1.value = columna
+							top_1.fill = greyFill
+							top_1.font = Font(name='Arial', size=9, bold=True,
+																			 color='ffffff')
+							top_1.alignment = Alignment(horizontal="center", vertical="center")
+						if c_linea==1:
+							ws.cell(row=f, column=c_columna + 1).value = columna
+							ws.cell(row=f, column=c_columna + 1).fill = greyFill
+							ws.cell(row=f, column=c_columna + 1).font = Font(name='Arial', size=9, bold=True,
+																			 color='ffffff')
+							ws.cell(row=f, column=c_columna + 1).alignment = Alignment(horizontal="center", vertical="center")
+					else:
+						ws.cell(row=f, column=c_columna + 1).value = columna
+						ws.cell(row=f, column=c_columna + 1).alignment = Alignment(horizontal="center",
+																				   vertical="center")
+					c_columna += 1
+				c_linea += 1
+				f += 1
+			f += 1
 		virtual_wb = BytesIO()
 		app.logger.info("Construyendo reporte xlsx.")
 		wb.save(virtual_wb)
@@ -330,6 +362,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		data_for_s_new_table = []
 		data_for_t_new_table = []
 		styl_new_count = 0
+
 		style_newx2 = TableStyle(
 			[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
 		style_newx2.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
@@ -402,7 +435,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								fila_totales[i] += abs(row[i])
 						lista_aux.append(valor)
 					else:
-						if i not in [1,6,17]:
+						if i not in [0,1,17]:
 							valor = row[i]
 							if i in [10, 11, 14, 15]:
 								if valor < 0:
@@ -511,6 +544,10 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					flowables.append(tbl)
 					flowables.append(Table([("", " ", ""), ("", "", "")]))
 			c_count += 1
+		ramos,ramo_style,bonos,bono_style=get_tablas_referencia()
+		tbl = Table(ramos, hAlign='LEFT')
+		tbl.setStyle(ramo_style)
+		flowables.append(tbl)
 		app.logger.info("Construyendo reporte pdf.")
 		PageNumCanvas.setReporte(PageNumCanvas,'COMISIONES')
 		doc.build(flowables,canvasmaker=PageNumCanvas)
@@ -551,7 +588,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			lista_aux = []
 			for i in range(0, len(row)):
 				lista_aux.append(row[i])
-		#cursors[0].close
+		cur1.close
 		if not has_agent:
 			app.logger.error("La cabecera volvio vacia.")
 			return False, 'Identificador no encontrado', 0, 0,0
@@ -563,7 +600,6 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		tbl = Table(header_all)
 		tbl.setStyle(grid2)
 		flowables.append(tbl)
-		cur1.close()
 		j = 0
 		lista = getHeadColumnsBonos("PDF",P_COD)
 		data_body = []
@@ -590,27 +626,24 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			has_data=True
 			lista_aux = []
 			for i in range(0, len(row)):
-				if P_COD in ["A", "P"]:
-					if i < 21 and i not in [3,8,9,19]:
-						if i == 2:
-							lista_aux.append(getTipoSubBono(row[i]))
+				if i < 21 and i not in [3,8,9,19]:
+					valor=row[i]
+					if i == 10 and int(row[i]) == 1:
+						valor=' '
+					if i == 20:
+						if row[i] is not None:
+							auxnewdate = datetime.date.strftime(row[i], "%m/%d/%Y")
+							valor = auxnewdate
 						else:
-							if i==20:
-								if row[i] is not None:
-									auxnewdate=datetime.date.strftime(row[i], "%m/%d/%Y")
-									lista_aux.append(auxnewdate)
-								else:
-									lista_aux.append(' ')
-							else:
-								lista_aux.append(row[i])
-					if i==9:
-						if row[21]== 'NO':
-							lista_aux.append("Si")
-						if row[21]== 'SI':
-							lista_aux.append("No")
-				if P_COD == 'UDI':
-					if i not in [1,2,16]:
-						lista_aux.append(row[i])
+							valor=' '
+					if i == 2:
+						valor=getTipoSubBono(int(row[i]))
+					lista_aux.append(valor)
+				if i==9:
+					if row[21]== 'NO':
+						lista_aux.append("Si")
+					if row[21]== 'SI':
+						lista_aux.append("No")
 			data_body.append(lista_aux)
 		c_det.close()
 		if not has_data:
@@ -618,6 +651,16 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			return False, 'Error generando el reporte.', 0, 0,0
 		tbl = Table(data_body, repeatRows=1)
 		tbl.setStyle(tblstyle)
+		flowables.append(tbl)
+		flowables.append(Table([("", " ", ""), ("", "", "")]))
+		app.logger.info("Agregando tabla de soporte.")
+		ramos, ramo_style, bonos, bono_style = get_tablas_referencia()
+		tbl = Table(ramos, hAlign='LEFT')
+		tbl.setStyle(ramo_style)
+		flowables.append(tbl)
+		flowables.append(Table([("", " ", ""), ("", "", "")]))
+		tbl = Table(bonos, hAlign='LEFT')
+		tbl.setStyle(bono_style)
 		flowables.append(tbl)
 		PageNumCanvas.setReporte(PageNumCanvas,'BONOS')
 		app.logger.info("Construyendo reporte pdf.")
@@ -649,8 +692,6 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		plantilla = "plantilla_agentes.xlsx"
 		if P_COD == 'P':
 			plantilla = "plantilla_promotor.xlsx"
-		if P_COD == 'UDI':
-			plantilla = "plantilla_udi.xlsx"
 		wb = opyxl.load_workbook(plantilla)
 		app.logger.info("Cargado archivo de plantilla xlsx.")
 		ws = wb.worksheets[0]
@@ -701,56 +742,126 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		for row in data:
 			has_data = True
 			lista_razones = []
-			if P_COD in ["A","P"]:
-				for i in range(0, len(row)):
+			for i in range(0, len(row)):
 
-					if i < 21:
-						aux = 0
-						if i >= 9:
-							aux = 1
-						valor = row[i]
-						if i == 2:
-							valor = getTipoSubBono(int(row[i]))
-						ws.cell(row=14 + j, column=i + 1 + aux).value = valor
-						ws.cell(row=14+j, column=i + 1+aux).border = Border(left=Side(style='thin'), right=Side(style='thin'),
-																	 top=Side(style='thin'), bottom=Side(style='thin'))
-						ws.cell(row=14 + j, column=i + 1 + aux).alignment = Alignment(horizontal="center",
-																					  vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=14 + j, column=i + 1 + aux).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=14 + j, column=i + 1 + aux).font = Font(name='Arial', size=7)
-					else:
-						if i == 21:
-							if row[i] == 'NO':
-								ws.cell(row=14 + j, column=10).value = 'Sí'
-							else:
-								ws.cell(row=14 + j, column=10).value = 'No'
-						if i > 21 and row[21] == 'SI':
-							if row[i] is not None and len(row[i]) > 0:
-								lista_razones.append(row[i])
-				if row[21] == 'SI' and len(lista_razones) > 0:
-					ws.cell(row=14 + j, column=11).value = ", ".join(lista_razones)
-				if row[21] == 'NO':
-					ws.cell(row=14 + j, column=11).value = ' '
-			if P_COD == 'UDI':
-				for i in range(0, len(row)):
+				if i < 21:
 					valor = row[i]
+					aux = 0
+					if i >= 9:
+						aux = 1
 					if i == 2:
-						valor = getTipoSubBono(row[i])
-					ws.cell(row=14 + j, column=i + 1 ).value = valor
-					ws.cell(row=14+j, column=i + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+						valor = getTipoSubBono(int(row[i]))
+					if i == 10 and int(row[i]) == 1:
+						valor = ' '
+					if i == 20:
+						if row[i] is not None:
+							auxnewdate = datetime.date.strftime(row[i], "%m/%d/%Y")
+							valor = auxnewdate
+						else:
+							valor= ' '
+					ws.cell(row=14 + j, column=i + 1 + aux).value = valor
+					ws.cell(row=14+j, column=i + 1+aux).border = Border(left=Side(style='thin'), right=Side(style='thin'),
 																 top=Side(style='thin'), bottom=Side(style='thin'))
-					ws.cell(row=14 + j, column=i + 1 ).alignment = Alignment(horizontal="center",vertical="center")
+					ws.cell(row=14 + j, column=i + 1 + aux).alignment = Alignment(horizontal="center",
+																				  vertical="center")
 					if len(str(valor)) > 17:
-						ws.cell(row=14 + j, column=i + 1 ).font = Font(name='Arial', size=8)
+						ws.cell(row=14 + j, column=i + 1 + aux).font = Font(name='Arial', size=8)
 						if len(str(valor)) > 25:
-							ws.cell(row=14 + j, column=i + 1 ).font = Font(name='Arial', size=7)
+							ws.cell(row=14 + j, column=i + 1 + aux).font = Font(name='Arial', size=7)
+				else:
+					if i == 21:
+						if row[i] == 'NO':
+							ws.cell(row=14 + j, column=10).value = 'Sí'
+						else:
+							ws.cell(row=14 + j, column=10).value = 'No'
+						ws.cell(row=14 + j, column=10).border = Border(left=Side(style='thin'),
+																	   right=Side(style='thin'),
+																	   top=Side(style='thin'),
+																	   bottom=Side(style='thin'))
+						ws.cell(row=14 + j, column=10).alignment = Alignment(horizontal="center",
+																					  vertical="center")
+					if i > 21 and row[21] == 'SI':
+						if row[i] is not None and len(row[i]) > 0:
+							lista_razones.append(row[i])
+			if row[21] == 'SI' and len(lista_razones) > 0:
+				ws.cell(row=14 + j, column=11).value = ", ".join(lista_razones)
+			if row[21] == 'NO':
+				ws.cell(row=14 + j, column=11).value = ' '
+
 			j += 1
 		c_det.close()
 		if not has_data:
 			app.logger.error("La tabla de detalle volvio vacia.")
 			return False, 'Error en la generacion del reporte.', 0, 0,0
+		j += 16
+		ramos, ramo_style, bonos, bono_style = get_tablas_referencia()
+		t_apoyo=[ramos,bonos]
+		for tabla in t_apoyo:
+			c_linea=0
+			for linea in tabla:
+				c_columna=0
+				for columna in linea:
+					if c_linea in [0, 1]:
+						if c_linea == 0 and t_apoyo.index(tabla) == 1 and c_columna == 0:
+							top_1 = ws.cell(row=j, column=1)
+							top_2 = ws.cell(row=j, column=3)
+							top_3 = ws.cell(row=j, column=5)
+							top_4 = ws.cell(row=j, column=7)
+							ws.merge_cells(start_row=j, start_column=1, end_row=j, end_column=2)
+							ws.merge_cells(start_row=j, start_column=3, end_row=j, end_column=4)
+							ws.merge_cells(start_row=j, start_column=5, end_row=j, end_column=6)
+							ws.merge_cells(start_row=j, start_column=7, end_row=j, end_column=8)
+							top_1.value = linea[0]
+							top_1.fill = greyFill
+							top_1.font = Font(name='Arial', size=9, bold=True,
+											  color='ffffff')
+							top_1.alignment = Alignment(horizontal="center",
+														vertical="center")
+							top_2.value = linea[2]
+							top_2.fill = greyFill
+							top_2.font = Font(name='Arial', size=9, bold=True,
+											  color='ffffff')
+							top_2.alignment = Alignment(horizontal="center",
+														vertical="center")
+							top_3.value = linea[4]
+							top_3.fill = greyFill
+							top_3.font = Font(name='Arial', size=9, bold=True,
+											  color='ffffff')
+							top_3.alignment = Alignment(horizontal="center",
+														vertical="center")
+							top_4.value = linea[6]
+							top_4.fill = greyFill
+							top_4.font = Font(name='Arial', size=9, bold=True,
+											  color='ffffff')
+							top_4.alignment = Alignment(horizontal="center",
+														vertical="center")
+						if c_linea == 0 and t_apoyo.index(tabla) == 0 and c_columna == 0:
+							top_1 = ws.cell(row=j, column=c_columna + 1)
+							ws.merge_cells(start_row=j, start_column=1, end_row=j, end_column=8)
+							top_1.value = columna
+							top_1.fill = greyFill
+							top_1.font = Font(name='Arial', size=9, bold=True,
+											  color='ffffff')
+							top_1.alignment = Alignment(horizontal="center",
+																					   vertical="center")
+						if c_linea==1:
+							ws.cell(row=j, column=c_columna + 1).value = columna
+							ws.cell(row=j, column=c_columna + 1).fill = greyFill
+							ws.cell(row=j, column=c_columna + 1).font = Font(name='Arial', size=9, bold=True,
+																			 color='ffffff')
+							ws.cell(row=j, column=c_columna + 1).alignment = Alignment(horizontal="center",
+																					   vertical="center")
+					else:
+						ws.cell(row=j, column=c_columna+1).value = columna
+						ws.cell(row=j, column=c_columna + 1).alignment = Alignment(horizontal="center",
+																				   vertical="center")
+
+					c_columna+=1
+				c_linea+=1
+				j += 1
+			j += 1
+
+
 		virtual_wb = BytesIO()
 		app.logger.info("Construyendo reporte xlsx.")
 		wb.save(virtual_wb)
