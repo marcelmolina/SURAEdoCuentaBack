@@ -18,6 +18,8 @@ from io import BytesIO
 import cx_Oracle
 import os
 from dotenv import load_dotenv
+from apoyo import getTableNamesUDI
+from apoyo import getHeadColumnsUDI
 from apoyo import get_tablas_referencia
 from apoyo import getheaderforcompressed
 from apoyo import getcolumnstosum
@@ -27,6 +29,7 @@ from apoyo import getTipoSubBono
 from apoyo import getTableNamesComisiones
 from apoyo import getquery
 from apoyo import getheaderpdf
+from apoyo import getcolumnstosum_udi
 import asyncio
 import cx_Oracle_async
 
@@ -633,7 +636,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						valor=' '
 					if i == 20:
 						if row[i] is not None:
-							auxnewdate = datetime.date.strftime(row[i], "%m/%d/%Y")
+							auxnewdate = datetime.date.strftime(row[i], "%d/%m/%Y")
 							valor = auxnewdate
 						else:
 							valor=' '
@@ -757,7 +760,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						valor = ' '
 					if i == 20:
 						if row[i] is not None:
-							auxnewdate = datetime.date.strftime(row[i], "%m/%d/%Y")
+							auxnewdate = datetime.date.strftime(row[i], "%d/%m/%Y")
 							valor = auxnewdate
 						else:
 							valor= ' '
@@ -871,6 +874,370 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 	except Exception as ex:
 		app.logger.error(ex)
 		return False, 'Error en la generacion del reporte.', 0, 0,0
+
+
+async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
+	try:
+		pdfmetrics.registerFont(ttfonts.TTFont("Arial", "Arial.ttf"))
+		pdfmetrics.registerFont(ttfonts.TTFont("Arial_Bold", "Arial_Bold.ttf"))
+		app.logger.info("Entrando a Estado de cuentas PDF (" + P_COD + ")")
+		con_est, con_mssg, pool = await get_oracle_pool(app)
+		if not con_est:
+			return False, con_mssg, 0, 0, 0
+		app.logger.info("Conectado a la base de datos.")
+		has_agent = False
+		app.logger.info("Iniciando carga de cursores")
+		cursors = await tasks(app, 8, P_COD, ' ', P_Clave, P_Feini, P_Fefin, pool)
+		if 'Excepcion' in cursors:
+			return False, 'Hubo un error obteniendo la data', 0, 0, 0
+		app.logger.info("Cargados todos los cursores.")
+		libro_nombre = P_Clave + "_" + P_Feini.replace("/", "") + "_" + P_Fefin.replace("/", "") + '_udi.pdf'
+
+		virtual_wb = BytesIO()
+		doc = SimpleDocTemplate(virtual_wb, pagesize=landscape((475 * mm, 600 * mm)), topMargin=45 * mm)
+		flowables = []
+		app.logger.info("Leyendo cursor de cabecera")
+		for row in cursors[0]:
+			has_agent = True
+			lista_aux = []
+			for i in range(0, len(row)):
+				lista_aux.append(row[i])
+		if not has_agent:
+			app.logger.error("La cabecera volvio vacia.")
+			return False, 'Identificador no encontrado', 0, 0, 0
+		header_all = getheaderpdf(P_COD, lista_aux, 'UDI')
+		grid = [('FONTNAME', (0, 0), (-1, -1), 'Arial_Bold'), ('ALIGN', (0, 0), (-1, -1), 'LEFT')]
+		grid2 = [('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+				 ('FONTNAME', (1, 0), (1, -1), 'Arial_Bold'),
+				 ('FONTNAME', (4, 0), (4, -1), 'Arial_Bold')]
+		tbl_header = Table(header_all, hAlign='LEFT')
+		tbl_header.setStyle(grid2)
+		flowables.append(tbl_header)
+		del cursors[0]
+		c_count = 1
+		empty_cursors = []
+		data_for_s_new_table = []
+		data_for_t_new_table = []
+
+		style_newx2 = TableStyle(
+			[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+		style_newx2.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
+		style_newx2.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
+		style_newx2.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
+		style_newx2.add('BACKGROUND', (0, 1), (-1, 1), '#e8eaea')
+		style_newx2.add('TEXTCOLOR', (0, 1), (-1, 1), colors.black)
+		style_newx2.add('FONTNAME', (0, 1), (-1, 1), 'Arial')
+		style_newx2.add('BACKGROUND', (0, 2), (-1, 2), '#e2e4e4')
+		style_newx2.add('TEXTCOLOR', (0, 2), (-1, 2), colors.black)
+		style_newx2.add('FONTNAME', (0, 2), (-1, 2), 'Arial')
+		for cursor in cursors:
+			tblstyle = TableStyle(
+				[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+			app.logger.info(f"Leyendo cursor -> ({c_count})")
+			lista = getHeadColumnsUDI("pdf", c_count)
+			data_cursor = []
+			theader = []
+			theader.append([getTableNamesUDI(c_count)])
+			taux = Table(theader, hAlign='LEFT')
+			taux.setStyle(grid)
+			data_cursor.append(lista)
+			fila_totales = []
+			if c_count in [4,6]:
+				fila_totales = ["", "", "", "", "", "", "", "TOTAL", 0, 0, ' ', 0,0,'','','']
+			if c_count in [1, 2]:
+				fila_totales = ["TOTAL", 0, 0, 0, 0, 0, 0, 0]
+			if c_count in [3, 5]:
+				fila_totales = ["TOTAL", 0]
+			if c_count in [7]:
+				fila_totales = ["TOTAL", 0, 0, 0]
+			numrow = 1
+			tblstyle.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
+			tblstyle.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
+			tblstyle.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
+			for row in cursor:
+				vcolor = '#e2e4e4'
+				if numrow % 2 == 0:
+					vcolor = '#e8eaea'
+				tblstyle.add('BACKGROUND', (0, numrow), (-1, numrow), vcolor)
+				tblstyle.add('TEXTCOLOR', (0, numrow), (-1, numrow), colors.black)
+				tblstyle.add('FONTNAME', (0, numrow), (-1, numrow), 'Arial')
+				numrow += 1
+				lista_aux = []
+				for i in range(0, len(row)):
+					if c_count in [1, 2, 3, 5, 7]:
+						valor = row[i]
+						if c_count in [1, 2]:
+							if i != 0:
+								if valor < 0:
+									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
+								else:
+									valor = "{:,.2f}".format(valor)
+								fila_totales[i] += abs(row[i])
+						if c_count in [3,5]:
+							if i != 0:
+								if valor < 0:
+									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
+								else:
+									valor = "{:,.2f}".format(valor)
+						# fila_totales[i] += abs(row[i])
+						if c_count in [7]:
+							if i != 0:
+								if valor < 0:
+									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
+								else:
+									valor = "{:,.2f}".format(valor)
+								fila_totales[i] += abs(row[i])
+						lista_aux.append(valor)
+					else:
+						valor = row[i]
+						if i == 15:
+							if row[i] is not None:
+								auxnewdate = datetime.date.strftime(row[i], "%d/%m/%Y")
+								valor = auxnewdate
+							else:
+								valor = ' '
+						if i in [8,9, 11, 12]:
+							if valor < 0:
+								valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
+							else:
+								valor = "{:,.2f}".format(valor)
+							fila_totales[i] += abs(row[i])
+						lista_aux.append(valor)
+				data_cursor.append(lista_aux)
+			if c_count in [1]:
+				data_for_s_new_table = list(data_cursor)
+			if c_count in [2]:
+				data_for_t_new_table = list(data_cursor)
+			if c_count in [1, 2, 4, 6, 7]:
+				for i in range(17):
+					if i in getcolumnstosum_udi(c_count):
+						fila_totales[i] = "{:,.2f}".format(fila_totales[i])
+				data_cursor.append(fila_totales)
+				vcolor = '#e2e4e4'
+				if numrow % 2 == 0:
+					vcolor = '#e8eaea'
+				tblstyle.add('BACKGROUND', (0, numrow), (-1, numrow), vcolor)
+				tblstyle.add('TEXTCOLOR', (0, numrow), (-1, numrow), colors.black)
+				tblstyle.add('FONTNAME', (0, numrow), (-1, numrow), 'Arial')
+			if len(data_cursor) <= 2:
+				empty_cursors.append(c_count)
+			tbl = Table(data_cursor, hAlign='LEFT', repeatRows=1)
+			tbl.setStyle(tblstyle)
+
+			if c_count in [2]:
+				# necesito el header nuevo
+				lista_new_data = []
+				lista_new_data.append(getHeadColumnsUDI("pdf", c_count))
+				if len(data_for_s_new_table)>1:
+					lista_new_data.append(data_for_s_new_table[1])
+				else:
+					lista_new_data.append(['DAÑO','0','0','0','0','0','0','0'])
+				if len(data_for_t_new_table)>1:
+					lista_new_data.append(data_for_t_new_table[1])
+				else:
+					lista_new_data.append(['VIDA','0','0','0','0','0','0','0'])
+
+				tbl = Table(lista_new_data, hAlign='LEFT')
+				tbl.setStyle(style_newx2)
+				if c_count - 1 not in empty_cursors or c_count not in empty_cursors:
+					flowables.append(taux)
+					flowables.append(Table([("", " ", "")]))
+					flowables.append(tbl)
+					flowables.append(Table([("", " ", ""), ("", "", "")]))
+			if c_count in [3,4,5,6,7]:
+				if c_count not in empty_cursors:
+					flowables.append(taux)
+					flowables.append(Table([("", " ", "")]))
+					flowables.append(tbl)
+					flowables.append(Table([("", " ", ""), ("", "", "")]))
+			c_count += 1
+		flowables.append(PageBreak())
+		ramos, ramo_style, bonos, bono_style = get_tablas_referencia()
+		tbl = Table(ramos, hAlign='LEFT')
+		tbl.setStyle(ramo_style)
+		flowables.append(tbl)
+		app.logger.info("Construyendo reporte pdf.")
+		PageNumCanvas.setReporte(PageNumCanvas, 'COMISIONES')
+		doc.build(flowables, canvasmaker=PageNumCanvas)
+		return True, "", virtual_wb.getvalue(), "application/pdf", libro_nombre
+	except Exception as ex:
+		app.logger.error(ex)
+		return False, 'Error en la generacion del reporte.', 0, 0, 0
+
+
+async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
+	try:
+		app.logger.info("Entrando a Estado de cuentas XLSX ("+P_COD+")")
+		con_est, con_mssg, pool = await get_oracle_pool(app)
+		if not con_est:
+			return False, con_mssg, 0, 0, 0
+		app.logger.info("Conectado a la base de datos.")
+		has_agent = False
+		app.logger.info("Iniciando carga de cursores")
+		cursors = await tasks(app, 8, P_COD, ' ', P_Clave, P_Feini, P_Fefin, pool)
+		if 'Excepcion' in cursors:
+			return False, 'Hubo un error obteniendo la data', 0, 0, 0
+		app.logger.info("Cargados todos los cursores.")
+		libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_udi.xlsx'
+		plantilla = "plantilla_udi.xlsx"
+		wb = opyxl.load_workbook(plantilla)
+		app.logger.info("Cargado archivo de plantilla xlsx.")
+		ws = wb.worksheets[0]
+		ws.cell(row=1, column=6).value = "ESTADOS DE CUENTA DE BONOS"
+		ws.title = "Estado de Cuenta de Bonos"
+		has_agent = False
+		app.logger.info("Leyendo cursor de cabecera")
+		for row in cursors[0]:
+			has_agent = True
+			for i in range(0, len(row) - 4):
+				ws.cell(row=4 + i, column=9).value = row[i]
+			for i in range(len(row) - 4, len(row)):
+				ws.cell(row=i, column=4).value = row[i]
+		if not has_agent:
+			app.logger.error("La cabecera volvio vacia.")
+			return False,'Identificador no encontrado',0,0,0
+		del cursors[0]
+		f = 14  # principal gestor de filas del archivo
+		greyFill = PatternFill(fill_type='solid', start_color='10b0c2', end_color='10b0c2')
+		# NUEVO BLOQUE SECUENCIAL
+		c_count = 1
+		for cursor in cursors:
+
+			app.logger.info(f"Leyendo cursor -> ({c_count})")
+			fila_totales = [0, 0, 0, 0]
+			lista = getHeadColumnsUDI("excel", c_count)
+			alphabet_string = string.ascii_uppercase
+			alphabet_list = list(alphabet_string)
+
+
+			if len(cursor) > 0:
+				ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count)
+				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
+				f += 1
+				j = 0
+				for item in lista:
+					ws.cell(row=f, column=j + 1).value = item
+					ws.cell(row=f, column=j + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+																 top=Side(style='thin'), bottom=Side(style='thin'))
+					ws.cell(row=f, column=j + 1).fill = greyFill
+					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True,color='ffffff')
+					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
+					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
+					multiplicador = 2
+					lista_columnas_esp = ['A', 'B', 'C', 'H']
+					ancho = len(item)
+					if len(item) <= 6:
+						ancho *= 2
+					if len(item) > 6 or columna == 'A':
+						ancho *= 1.1
+					if columna in lista_columnas_esp:
+						ancho = 25
+					if c_count == 4:
+						ws.column_dimensions[columna].width = ancho
+					j += 1
+			j = 0
+			k = 0
+			if len(cursor) > 0:
+				f += 1
+			has_data= False
+			for row in cursor:
+				for i in range(0, len(row)):
+					if c_count not in [4,6]:
+						valor = row[i]
+						if c_count in [1, 2]:
+							if i != 0:
+								valor = "{:,.2f}".format(valor)
+						if c_count in [3, 5, 7]:
+							if i != 0:
+								valor = "{:,.2f}".format(valor)
+						ws.cell(row=f, column=i + 1).value = valor
+						ws.cell(row=f, column=i + 1).border= Border(left=Side(style='thin'), right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
+						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
+						if len(str(valor)) > 17:
+							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
+							if len(str(valor)) > 25:
+								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
+					else:
+						valor = row[i]
+						if i in [8, 9, 11, 12]:
+							valor = "{:,.2f}".format(valor)
+						if i == 8:
+							fila_totales[0] += abs(row[i])
+						if i == 9:
+							fila_totales[1] += abs(row[i])
+						if i == 11:
+							fila_totales[2] += abs(row[i])
+						if i == 12:
+							fila_totales[3] += abs(row[i])
+						has_data = True
+						ws.cell(row=f, column=i + 1).value = valor
+						ws.cell(row=f, column=i + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+																	 top=Side(style='thin'), bottom=Side(style='thin'))
+						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
+						if len(str(valor)) > 17:
+							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
+							if len(str(valor)) > 25:
+								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
+				f += 1
+			#cursor.close()
+			if c_count in [4,6] and has_data:
+				fila_totales[0] = "{:,.2f}".format(fila_totales[0])
+				fila_totales[1] = "{:,.2f}".format(fila_totales[1])
+				fila_totales[2] = "{:,.2f}".format(fila_totales[2])
+				fila_totales[3] = "{:,.2f}".format(fila_totales[3])
+				ws.cell(row=f, column=8).value = "TOTAL"
+				ws.cell(row=f, column=8).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=9).value = fila_totales[0]
+				ws.cell(row=f, column=9).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=10).value = fila_totales[1]
+				ws.cell(row=f, column=10).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=12).value = fila_totales[2]
+				ws.cell(row=f, column=12).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=13).value = fila_totales[3]
+				ws.cell(row=f, column=3).alignment = Alignment(horizontal="center", vertical="center")
+				f += 1
+			if len(cursor) > 0:
+				f += 1
+			c_count += 1
+		# fin de bloque
+		f += 2
+		ramos, ramo_style, bonos, bono_style = get_tablas_referencia()
+		t_apoyo = [ramos]
+		for tabla in t_apoyo:
+			c_linea = 0
+			for linea in tabla:
+				c_columna = 0
+				for columna in linea:
+					if c_linea in [0, 1]:
+						if c_linea==0 and c_columna==0:
+							top_1 = ws.cell(row=f, column=1)
+							ws.merge_cells(start_row=f, start_column=1, end_row=f, end_column=8)
+							top_1.value = columna
+							top_1.fill = greyFill
+							top_1.font = Font(name='Arial', size=9, bold=True,
+																			 color='ffffff')
+							top_1.alignment = Alignment(horizontal="center", vertical="center")
+						if c_linea==1:
+							ws.cell(row=f, column=c_columna + 1).value = columna
+							ws.cell(row=f, column=c_columna + 1).fill = greyFill
+							ws.cell(row=f, column=c_columna + 1).font = Font(name='Arial', size=9, bold=True,
+																			 color='ffffff')
+							ws.cell(row=f, column=c_columna + 1).alignment = Alignment(horizontal="center", vertical="center")
+					else:
+						ws.cell(row=f, column=c_columna + 1).value = columna
+						ws.cell(row=f, column=c_columna + 1).alignment = Alignment(horizontal="center",
+																				   vertical="center")
+					c_columna += 1
+				c_linea += 1
+				f += 1
+			f += 1
+		virtual_wb = BytesIO()
+		app.logger.info("Construyendo reporte xlsx.")
+		wb.save(virtual_wb)
+		return True,"",virtual_wb.getvalue(), wb.mime_type,libro_nombre
+	except Exception as ex:
+		app.logger.error(ex)
+		return False, 'Error generando el reporte', 0, 0,0
 
 
 class PageNumCanvas(canvas.Canvas):

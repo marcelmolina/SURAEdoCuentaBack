@@ -9,6 +9,8 @@ from logica import comisiones_xlsx
 from logica import comisiones_pdf
 from logica import bonos_pdf
 from logica import bonos_xlx
+from logica import udi_pdf
+from logica import udi_xlsx
 import asyncio
 
 app = Flask(__name__)
@@ -194,7 +196,7 @@ async def bono_udi_xlsx():
 	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		estado,mensaje,file, filemime, filename = await bonos_xlx(P_Clave, P_Feini, P_Fefin, 'UDI',app)
+		estado,mensaje,file, filemime, filename = await udi_xlsx(P_Clave, P_Feini, P_Fefin,'UDI',app)
 
 		if not estado:
 			return make_response(jsonify(succes=False, message=mensaje), 400)
@@ -205,6 +207,7 @@ async def bono_udi_xlsx():
 		return make_response(jsonify(succes=False, message="La aplicacion tuvo un fallo inesperado."), 400)
 
 
+
 @app.route(context_path + '/udi/bonos/pdf', methods=['GET'])
 async def bono_udi_pdf():
 	P_Clave = request.args['codigo']
@@ -213,7 +216,7 @@ async def bono_udi_pdf():
 	P_Feini = datetime.datetime.strptime(P_Feini, "%Y-%m-%d").strftime("%d/%m/%Y")
 	P_Fefin = datetime.datetime.strptime(P_Fefin, "%Y-%m-%d").strftime("%d/%m/%Y")
 	try:
-		estado,mensaje,file, filemime, filename = await bonos_pdf(P_Clave, P_Feini, P_Fefin, 'UDI',app)
+		estado,mensaje,file, filemime, filename = await udi_pdf(P_Clave, P_Feini, P_Fefin,'UDI',app)
 
 		if not estado:
 			return make_response(jsonify(succes=False, message=mensaje), 400)
