@@ -162,33 +162,35 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			lista = getHeadColumnsComisones("excel", c_count)
 			alphabet_string = string.ascii_uppercase
 			alphabet_list = list(alphabet_string)
-			ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count)
-			ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
-			f += 1
-			j = 0
-			for item in lista:
-				ws.cell(row=f, column=j + 1).value = item
-				ws.cell(row=f, column=j + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
-															 top=Side(style='thin'), bottom=Side(style='thin'))
-				ws.cell(row=f, column=j + 1).fill = greyFill
-				ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True,color='ffffff')
-				ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
-				columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
-				multiplicador = 2
-				lista_columnas_esp = ['A', 'B', 'C', 'H']
-				ancho = len(item)
-				if len(item) <= 6:
-					ancho *= 2
-				if len(item) > 6 or columna == 'A':
-					ancho *= 1.1
-				if columna in lista_columnas_esp:
-					ancho = 25
-				if c_count == 5:
-					ws.column_dimensions[columna].width = ancho
-				j += 1
+			if len(cursor) > 0:
+				ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count)
+				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
+				f += 1
+				j = 0
+				for item in lista:
+					ws.cell(row=f, column=j + 1).value = item
+					ws.cell(row=f, column=j + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+																 top=Side(style='thin'), bottom=Side(style='thin'))
+					ws.cell(row=f, column=j + 1).fill = greyFill
+					ws.cell(row=f, column=j + 1).font = Font(name='Arial', size=9, bold=True,color='ffffff')
+					ws.cell(row=f, column=j + 1).alignment = Alignment(horizontal="center", vertical="center")
+					columna = alphabet_list[ws.cell(row=f, column=j + 1).column - 1]
+					multiplicador = 2
+					lista_columnas_esp = ['A', 'B', 'C', 'H']
+					ancho = len(item)
+					if len(item) <= 6:
+						ancho *= 2
+					if len(item) > 6 or columna == 'A':
+						ancho *= 1.1
+					if columna in lista_columnas_esp:
+						ancho = 25
+					if c_count == 5:
+						ws.column_dimensions[columna].width = ancho
+					j += 1
 			j = 0
 			k = 0
-			f += 1
+			if len(cursor) > 0:
+				f += 1
 			has_data= False
 			for row in cursor:
 				for i in range(0, len(row)):
@@ -243,16 +245,28 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				fila_totales[4] = "{:,.2f}".format(fila_totales[4])
 				ws.cell(row=f, column=10).value = "TOTAL"
 				ws.cell(row=f, column=10).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=10).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+															 top=Side(style='thin'), bottom=Side(style='thin'))
 				ws.cell(row=f, column=11).value = fila_totales[0]
 				ws.cell(row=f, column=11).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=11).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
 				ws.cell(row=f, column=12).value = fila_totales[1]
 				ws.cell(row=f, column=12).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=12).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
 				ws.cell(row=f, column=14).value = fila_totales[2]
 				ws.cell(row=f, column=14).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=14).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
 				ws.cell(row=f, column=15).value = fila_totales[3]
 				ws.cell(row=f, column=15).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=15).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
 				ws.cell(row=f, column=16).value = fila_totales[4]
 				ws.cell(row=f, column=16).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=16).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
 				f += 1
 			f += 1
 			c_count += 1
@@ -287,7 +301,8 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					c_columna += 1
 				c_linea += 1
 				f += 1
-			f += 1
+			if len(cursor) > 0:
+				f += 1
 		virtual_wb = BytesIO()
 		app.logger.info("Construyendo reporte xlsx.")
 		wb.save(virtual_wb)
@@ -943,7 +958,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			data_cursor.append(lista)
 			fila_totales = []
 			if c_count in [4,6]:
-				fila_totales = ["", "", "", "", "", "", "", "TOTAL", 0, 0, ' ', 0,0,'','','']
+				fila_totales = ["", "", "", "", "", "", "","","", "TOTAL", 0, 0, ' ', 0,0,'','','']
 			if c_count in [1, 2]:
 				fila_totales = ["TOTAL", 0, 0, 0, 0, 0, 0, 0]
 			if c_count in [3, 5]:
@@ -990,13 +1005,15 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						lista_aux.append(valor)
 					else:
 						valor = row[i]
-						if i == 15:
+						if i == 17:
 							if row[i] is not None:
 								auxnewdate = datetime.date.strftime(row[i], "%d/%m/%Y")
 								valor = auxnewdate
 							else:
 								valor = ' '
-						if i in [8,9, 11, 12]:
+						if i == 2:
+							valor= getTipoSubBono(int(row[i]))
+						if i in [10,11, 13, 14]:
 							if valor < 0:
 								valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
 							else:
@@ -1009,7 +1026,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			if c_count in [2]:
 				data_for_t_new_table = list(data_cursor)
 			if c_count in [1, 2, 4, 6, 7]:
-				for i in range(17):
+				for i in range(19):
 					if i in getcolumnstosum_udi(c_count):
 						fila_totales[i] = "{:,.2f}".format(fila_totales[i])
 				data_cursor.append(fila_totales)
@@ -1108,8 +1125,6 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			lista = getHeadColumnsUDI("excel", c_count)
 			alphabet_string = string.ascii_uppercase
 			alphabet_list = list(alphabet_string)
-
-
 			if len(cursor) > 0:
 				ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count)
 				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
@@ -1159,15 +1174,23 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
 					else:
 						valor = row[i]
-						if i in [8, 9, 11, 12]:
+						if i==2:
+							valor= getTipoSubBono(int(row[i]))
+						if i == 17:
+							if row[i] is not None:
+								auxnewdate = datetime.date.strftime(row[i], "%d/%m/%Y")
+								valor = auxnewdate
+							else:
+								valor = ' '
+						if i in [10, 11, 13, 14]:
 							valor = "{:,.2f}".format(valor)
-						if i == 8:
+						if i == 10:
 							fila_totales[0] += abs(row[i])
-						if i == 9:
-							fila_totales[1] += abs(row[i])
 						if i == 11:
+							fila_totales[1] += abs(row[i])
+						if i == 13:
 							fila_totales[2] += abs(row[i])
-						if i == 12:
+						if i == 14:
 							fila_totales[3] += abs(row[i])
 						has_data = True
 						ws.cell(row=f, column=i + 1).value = valor
@@ -1185,16 +1208,26 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				fila_totales[1] = "{:,.2f}".format(fila_totales[1])
 				fila_totales[2] = "{:,.2f}".format(fila_totales[2])
 				fila_totales[3] = "{:,.2f}".format(fila_totales[3])
-				ws.cell(row=f, column=8).value = "TOTAL"
-				ws.cell(row=f, column=8).alignment = Alignment(horizontal="center", vertical="center")
-				ws.cell(row=f, column=9).value = fila_totales[0]
-				ws.cell(row=f, column=9).alignment = Alignment(horizontal="center", vertical="center")
-				ws.cell(row=f, column=10).value = fila_totales[1]
+				ws.cell(row=f, column=10).value = "TOTAL"
 				ws.cell(row=f, column=10).alignment = Alignment(horizontal="center", vertical="center")
-				ws.cell(row=f, column=12).value = fila_totales[2]
+				ws.cell(row=f, column=10).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=11).value = fila_totales[0]
+				ws.cell(row=f, column=11).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=11).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=12).value = fila_totales[1]
 				ws.cell(row=f, column=12).alignment = Alignment(horizontal="center", vertical="center")
-				ws.cell(row=f, column=13).value = fila_totales[3]
-				ws.cell(row=f, column=3).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=12).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=14).value = fila_totales[2]
+				ws.cell(row=f, column=14).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=14).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=15).value = fila_totales[3]
+				ws.cell(row=f, column=15).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=15).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
 				f += 1
 			if len(cursor) > 0:
 				f += 1
