@@ -1073,8 +1073,11 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		tbl = Table(ramos, hAlign='LEFT')
 		tbl.setStyle(ramo_style)
 		flowables.append(tbl)
-		app.logger.info("Construyendo reporte pdf.")
-		PageNumCanvas.setReporte(PageNumCanvas, 'COMISIONES')
+		flowables.append(Table([("", " ", ""), ("", "", "")]))
+		tbl = Table(bonos, hAlign='LEFT')
+		tbl.setStyle(bono_style)
+		flowables.append(tbl)
+		PageNumCanvas.setReporte(PageNumCanvas, 'BONOS')
 		doc.build(flowables, canvasmaker=PageNumCanvas)
 		return True, "", virtual_wb.getvalue(), "application/pdf", libro_nombre
 	except Exception as ex:
@@ -1235,7 +1238,7 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		# fin de bloque
 		f += 2
 		ramos, ramo_style, bonos, bono_style = get_tablas_referencia()
-		t_apoyo = [ramos]
+		t_apoyo=[ramos,bonos]
 		for tabla in t_apoyo:
 			c_linea = 0
 			for linea in tabla:
