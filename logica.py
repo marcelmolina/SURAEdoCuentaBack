@@ -353,7 +353,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.pdf'
 
 		virtual_wb = BytesIO()
-		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((475*mm, 600*mm)),topMargin=45*mm)
+		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((518.4*mm, 672*mm)),topMargin=45*mm)
 		flowables = []
 		app.logger.info("Leyendo cursor de cabecera")
 		for row in cursors[0]:
@@ -453,7 +453,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								fila_totales[i] += abs(row[i])
 						lista_aux.append(valor)
 					else:
-						if i not in [0,1,17]:
+						if i not in [0,1]:
 							valor = row[i]
 							if i in [10, 11, 14, 15]:
 								if valor < 0:
@@ -597,7 +597,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 
 		app.logger.info("Cargados todos los cursores.")
 		virtual_wb = BytesIO()
-		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((475*mm, 600*mm)),topMargin=45*mm)
+		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((518.4*mm, 672*mm)),topMargin=45*mm)
 		flowables = []
 		libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.pdf'
 		app.logger.info("Leyendo cursor de cabecera")
@@ -645,7 +645,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			has_data=True
 			lista_aux = []
 			for i in range(0, len(row)):
-				if i < 21 and i not in [3,8,9,19]:
+				if i < 21 and i not in [3,8,9]:
 					valor=row[i]
 					if i == 10 and int(row[i]) == 1:
 						valor=' '
@@ -909,7 +909,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		libro_nombre = P_Clave + "_" + P_Feini.replace("/", "") + "_" + P_Fefin.replace("/", "") + '_udi.pdf'
 
 		virtual_wb = BytesIO()
-		doc = SimpleDocTemplate(virtual_wb, pagesize=landscape((475 * mm, 600 * mm)), topMargin=45 * mm)
+		doc = SimpleDocTemplate(virtual_wb, pagesize=landscape((518.4 * mm, 672 * mm)), topMargin=45 * mm)
 		flowables = []
 		app.logger.info("Leyendo cursor de cabecera")
 		for row in cursors[0]:
@@ -1300,22 +1300,24 @@ class PageNumCanvas(canvas.Canvas):
 		canvas.Canvas.save(self)
 
 	def draw_page_number(self, page_count):
+		ancho_page = 672
+		largo_page = 518.4
 		tahora= datetime.datetime.now(timezone('UTC'))
 		now_mexico = tahora.astimezone(timezone('America/Mexico_City'))
 		page = "Pagina %s de %s" % (self._pageNumber, page_count)
 		self.setFont("Arial", 11)
-		self.drawRightString((600 - 25) * mm, (475 - 23) * mm, "Blvd. Adolfo López Mateos No. 2448 / Col. Alta Vista Deleg. Alvaro Obregón / C. P. 01060 México, D. F.")
-		self.drawRightString((600 - 25) * mm, (475 - 31) * mm, "STel. 57-23-79-99, 01-800-723-79-00")
+		self.drawRightString((ancho_page - 25) * mm, (largo_page - 23) * mm, "Blvd. Adolfo López Mateos No. 2448 / Col. Alta Vista Deleg. Alvaro Obregón / C. P. 01060 México, D. F.")
+		self.drawRightString((ancho_page - 25) * mm, (largo_page - 31) * mm, "STel. 57-23-79-99, 01-800-723-79-00")
 		self.setFont("Arial_Bold", 11)
-		self.drawRightString((600 - 25) * mm, (475 - 15) * mm, "Seguros SURA, S. A. de C. V.")
+		self.drawRightString((ancho_page - 25) * mm, (largo_page - 15) * mm, "Seguros SURA, S. A. de C. V.")
 		self.setFont("Arial", 11)
 		self.setFillColor(colors.gray)
-		self.drawRightString((600 - 25) * mm, (475 - 455) * mm, page)
-		self.drawRightString((600 - 515) * mm, (475-455) * mm, f"Generado el {now_mexico.strftime('%m/%d/%Y, %H:%M:%S')}")
+		self.drawRightString((ancho_page - 25) * mm, (largo_page - (largo_page-20)) * mm, page)
+		self.drawRightString((ancho_page - (ancho_page-85)) * mm, (largo_page - (largo_page-20)) * mm, f"Generado el {now_mexico.strftime('%m/%d/%Y, %H:%M:%S')}")
 		im = Image('logo_sura.png')
-		im.drawOn(self,30*mm,(475-40)*mm)
+		im.drawOn(self,30*mm,(largo_page-40)*mm)
 		self.setFillColor('#10b0c2')
 		self.setFont("Arial_Bold", 25)
-		self.drawString((600 - 480) * mm, (475 - 18) * mm, "ESTADO DE CUENTA")
+		self.drawString((ancho_page - (ancho_page-120)) * mm, (largo_page - 18) * mm, "ESTADO DE CUENTA")
 		self.setFillColor('#2e3a8f')
-		self.drawString((600 - 480) * mm, (475 - 29) * mm, "DE "+self.reporte)
+		self.drawString((ancho_page - (ancho_page-120)) * mm, (largo_page - 29) * mm, "DE "+self.reporte)
