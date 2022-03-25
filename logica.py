@@ -518,7 +518,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				tbl = Table(data_for_f_new_table)
 				tbl.setStyle(style_for_f_new_table)
 				data = [[tbl_header, tbl]]
-				shell_table = Table(data,hAlign='LEFT',colWidths=[350*mm,200*mm])
+				shell_table = Table(data,hAlign='LEFT',colWidths = [400 * mm, 200 * mm], style = [('VALIGN', (0, 0), (-1, -1), 'MIDDLE')])
 				flowables.append(shell_table)
 				flowables.append(Table([("", " ", ""), ("", "", "")]))
 			if c_count in [4,8]:
@@ -927,24 +927,27 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				 ('FONTNAME', (4, 0), (4, -1), 'Arial_Bold')]
 		tbl_header = Table(header_all, hAlign='LEFT')
 		tbl_header.setStyle(grid2)
-		flowables.append(tbl_header)
+		#flowables.append(tbl_header)
 		del cursors[0]
 		c_count = 1
 		empty_cursors = []
 		data_for_s_new_table = []
 		data_for_t_new_table = []
-
+		data_for_f_new_table = []
 		style_newx2 = TableStyle(
 			[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+		style_newx2.add('SPAN', (0, 0), (7, 0))
 		style_newx2.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
-		style_newx2.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
-		style_newx2.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
-		style_newx2.add('BACKGROUND', (0, 1), (-1, 1), '#e8eaea')
-		style_newx2.add('TEXTCOLOR', (0, 1), (-1, 1), colors.black)
-		style_newx2.add('FONTNAME', (0, 1), (-1, 1), 'Arial')
-		style_newx2.add('BACKGROUND', (0, 2), (-1, 2), '#e2e4e4')
+		style_newx2.add('TEXTCOLOR', (0, 0), (-1, 0), colors.black)
+		style_newx2.add('FONTNAME', (0, 1), (-1, 1), 'Arial_Bold')
+		style_newx2.add('TEXTCOLOR', (0, 1), (-1, 1), colors.white)
+		style_newx2.add('BACKGROUND', (0, 1), (-1, 1), '#10b0c2')
+		style_newx2.add('BACKGROUND', (0, 2), (-1, 2), '#e8eaea')
 		style_newx2.add('TEXTCOLOR', (0, 2), (-1, 2), colors.black)
 		style_newx2.add('FONTNAME', (0, 2), (-1, 2), 'Arial')
+		style_newx2.add('BACKGROUND', (0, 3), (-1, 3), '#e2e4e4')
+		style_newx2.add('TEXTCOLOR', (0, 3), (-1, 3), colors.black)
+		style_newx2.add('FONTNAME', (0, 3), (-1, 3), 'Arial')
 		for cursor in cursors:
 			tblstyle = TableStyle(
 				[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
@@ -957,11 +960,11 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			taux.setStyle(grid)
 			data_cursor.append(lista)
 			fila_totales = []
-			if c_count in [4,6]:
+			if c_count in [5,6]:
 				fila_totales = ["", "", "", "", "", "", "","","", "TOTAL", 0, 0, ' ', 0,0,'','','']
 			if c_count in [1, 2]:
 				fila_totales = ["TOTAL", 0, 0, 0, 0, 0, 0, 0]
-			if c_count in [3, 5]:
+			if c_count in [3, 4]:
 				fila_totales = ["TOTAL", 0]
 			if c_count in [7]:
 				fila_totales = ["TOTAL", 0, 0, 0]
@@ -979,7 +982,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				numrow += 1
 				lista_aux = []
 				for i in range(0, len(row)):
-					if c_count in [1, 2, 3, 5, 7]:
+					if c_count in [1, 2, 3, 4, 7]:
 						valor = row[i]
 						if c_count in [1, 2]:
 							if i != 0:
@@ -988,7 +991,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								else:
 									valor = "{:,.2f}".format(valor)
 								fila_totales[i] += abs(row[i])
-						if c_count in [3,5]:
+						if c_count in [3,4]:
 							if i != 0:
 								if valor < 0:
 									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
@@ -1025,7 +1028,11 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				data_for_s_new_table = list(data_cursor)
 			if c_count in [2]:
 				data_for_t_new_table = list(data_cursor)
-			if c_count in [1, 2, 4, 6, 7]:
+			if c_count in [3]:
+				data_for_f_new_table = list(data_cursor)
+			if c_count in [4]:
+				data_for_s_new_table = list(data_cursor)
+			if c_count in [1, 2, 5, 6, 7]:
 				for i in range(19):
 					if i in getcolumnstosum_udi(c_count):
 						fila_totales[i] = "{:,.2f}".format(fila_totales[i])
@@ -1044,6 +1051,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			if c_count in [2]:
 				# necesito el header nuevo
 				lista_new_data = []
+				lista_new_data.append([getTableNamesUDI(2), ' ', ' ', ' ', ' ', ' ', ' ', ' '])
 				lista_new_data.append(getHeadColumnsUDI("pdf", c_count))
 				if len(data_for_s_new_table)>1:
 					lista_new_data.append(data_for_s_new_table[1])
@@ -1056,12 +1064,59 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 
 				tbl = Table(lista_new_data, hAlign='LEFT')
 				tbl.setStyle(style_newx2)
+				data = [[tbl_header, tbl]]
+				shell_table = Table(data, hAlign='LEFT', colWidths=[400 * mm, 200 * mm],style=[('VALIGN', (0, 0), (-1, -1), 'MIDDLE')])
+				flowables.append(shell_table)
+				flowables.append(Table([("", " ", ""), ("", "", "")]))
+			if c_count in [4]:
+				# necesito el header nuevo
+				lista_new_data = []
+				list_header = getheaderforcompressed(data_for_f_new_table, data_for_s_new_table)
+				list_header[0]='Daño/Vida'
+				lista_new_data.append(list_header)
+				aux_list_1 = []
+				aux_list_1.append('DAÑO')
+				aux_list_2 = []
+				aux_list_2.append('VIDA')
+				for i in range(len(list_header)):
+					if i > 0:
+						entro = False
+						for couple in data_for_f_new_table:
+							if couple[0] == list_header[i]:
+								if len(aux_list_1)==i:
+									entro = True
+									aux_list_1.append(couple[1])
+						if not entro:
+							aux_list_1.append("0.00")
+						entro = False
+						for couple in data_for_s_new_table:
+							if couple[0] == list_header[i]:
+								if len(aux_list_2)  == i:
+									entro = True
+									aux_list_2.append(couple[1])
+						if not entro:
+							aux_list_2.append("0.00")
+				lista_new_data.append(aux_list_1)
+				lista_new_data.append(aux_list_2)
+				tbl = Table(lista_new_data, hAlign='LEFT')
+				style_newx3 = TableStyle(
+					[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+				style_newx3.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
+				style_newx3.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
+				style_newx3.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
+				style_newx3.add('BACKGROUND', (0, 1), (-1, 1), '#e8eaea')
+				style_newx3.add('TEXTCOLOR', (0, 1), (-1, 1), colors.black)
+				style_newx3.add('FONTNAME', (0, 1), (-1, 1), 'Arial')
+				style_newx3.add('BACKGROUND', (0, 2), (-1, 2), '#e2e4e4')
+				style_newx3.add('TEXTCOLOR', (0, 2), (-1, 2), colors.black)
+				style_newx3.add('FONTNAME', (0, 2), (-1, 2), 'Arial')
+				tbl.setStyle(style_newx3)
 				if c_count - 1 not in empty_cursors or c_count not in empty_cursors:
 					flowables.append(taux)
 					flowables.append(Table([("", " ", "")]))
 					flowables.append(tbl)
 					flowables.append(Table([("", " ", ""), ("", "", "")]))
-			if c_count in [3,4,5,6,7]:
+			if c_count in [5,6,7]:
 				if c_count not in empty_cursors:
 					flowables.append(taux)
 					flowables.append(Table([("", " ", "")]))

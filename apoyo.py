@@ -44,7 +44,7 @@ def getHeadColumnsUDI(extension,cursor):
 		lista.append('Impuesto Cedular')
 		lista.append('Honorarios')
 		lista.append('Total')
-	if cursor in [3, 5]:
+	if cursor in [3, 4]:
 		lista.append('CONCEPTO')
 		lista.append('IMPORTE')
 	if cursor in [7]:
@@ -52,7 +52,7 @@ def getHeadColumnsUDI(extension,cursor):
 		lista.append('Daños')
 		lista.append('Vida')
 		lista.append('Total')
-	if cursor in [4, 6]:
+	if cursor in [5, 6]:
 		lista.append('# Bono')
 		lista.append('Tipo Bono')
 		lista.append('Subtipo Bono')
@@ -155,11 +155,11 @@ def getTableNamesUDI(tabla):
 	if tabla == 2:
 		return "TOTAL DE PERCEPCIONES MENSUALES"
 	if tabla == 3:
-		return "CONCEPTOS DE DAÑO"
-	if tabla == 4:
-		return "DETALLE DAÑO"
+		return "CONCEPTOS DE DAÑO/VIDA"
 	if tabla == 5:
-		return "CONCEPTOS DE VIDA"
+		return "DETALLE DAÑO"
+	if tabla == 4:
+		return "CONCEPTOS DE DAÑO/VIDA"
 	if tabla == 6:
 		return "DETALLE VIDA"
 	if tabla == 7:
@@ -209,12 +209,12 @@ def getquery(clave,tipo,tabla,codigo,desde,hasta):
 					f"C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'I',NVL(a.ptimport,0),0),0)),0)) ISR, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'C',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'C',NVL(a.ptimport,0),0),0)),0)) IMPUESTO_CEDULAR, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'T',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T " \
 					f"WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + " \
 					f"NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'T',NVL(a.ptimport,0),0),0)),0)) HONORARIOS FROM tsia_movUDI a, tsia_tipmovi b WHERE a.cdcvemov >= 1000 AND a.cdconc = b.cdconc AND a.cdcvemov = b.cdcvemov AND b.swconinm IN ('C','I','R','V','T') AND TRUNC(a.femovimi) BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdprovee = '{codigo}' GROUP BY a.cdprovee)"
-		if tabla == 4:
+		if tabla == 5:
 			query = f"SELECT XBNO, ( SELECT A.DSBONO FROM BON_TCATBONO A WHERE A.CDBONO =( SELECT CDBONO FROM BON_TCONFBON A WHERE A.NMBONO = XBNO)) DS_BONO, ( SELECT CDTIPBON FROM BON_TCONFBON A WHERE A.NMBONO = XBNO) TIPO_BONO, GRUPO, OFICINA, RAMO, POLIZA, nomtomador(OFICINA, RAMO, 'M', POLIZA, 9999999999999999999) CONTRATANTE, DECODE(TIPOCAMB, 1, ' ', TIPOCAMB) TIPO_CAMBIO, RECIBO, nvl(( SELECT PTIMPORT FROM MRECIBO WHERE CDUNIECO = OFICINA AND NMRECIBO = RECIBO), 0) CF_PRIMAREC, CS_COMISIONNETAR, CS_COMISIONDERECHOR, ( SELECT SUM(PTIMPORT) FROM TSIA_MOVUDI K WHERE K.NUMPRELIQ = NUMPRELIQUI AND K.CDCONC = 'N') TOT_PRE_IMP, ( SELECT SUM(PTIMPORT) FROM TSIA_MOVUDI K WHERE K.NUMPRELIQ = NUMPRELIQUI) TOT_POST_IMP, (SELECT min(NUMPRELIQ) FROM TSIA_MOVUDI A WHERE A.CDMONEDA='MXP' AND A.cdprovee=promotorcom AND A.CDCVEMOV=DECODE((SELECT CDTIPRAM FROM TRAMOS WHERE CDRAMO=RAMO),'3',1600,600) AND A.CDCONC='PC' AND A.FEMOVIMI>= femovimiento ) NUMPRELI, ( SELECT distinct DECODE(NVL(CDCOMPRO, 0), 0, '', DECODE(CDMETPAG, 'EFT', NMTRANSF, 'CHK', NMCHEQUE, CDCOMPRO)) FROM MINTPSOFT WHERE NUMPRELI = (SELECT min(NUMPRELIQ) FROM TSIA_MOVUDI A WHERE A.CDMONEDA='MXP' AND A.cdprovee=promotorcom AND A.CDCVEMOV=DECODE((SELECT CDTIPRAM FROM TRAMOS WHERE CDRAMO=RAMO),'3',1600,600) AND A.CDCONC='PC' AND A.FEMOVIMI>= femovimiento )) COMPROBANTE, " \
 					f"femovimiento FECHA FROM ( SELECT a.tipocamb, a.nmbono XBNO, A.CDPROVEE promotorcom, A.CDMONEDA monedadet, TRUNC(A.FEMOVIMI) femovimiento, A.CDUNIECO oficina , A.CDRAMO ramo , A.NMPOLIZA poliza, A.NMRECIBO recibo, cdgrupo grupo, cdsubgrp sbgrupo, A.PRIMA_RECIBO ComisionNeta, A.PRIMA_CONVER IvaComision, A.PRIMA_APLICAR IvaRetenido, A.PRIMA_PAGO IsrComision, A.PORCERAN ComisionDerecho, A.PAGO_BONO IsrComDerecho, A.PAGO_FINAL IvaRetDerecho , 0 IvaDerecho, B.FEINICIO feinicio, B.FEFINAL fefinal, 1000 importerec, TRUNC(SYSDATE) fechabase, SUM(A.PRIMA_RECIBO) CS_COMISIONNETAR, SUM(A.PRIMA_CONVER) CF_PRIMANETA, SUM(A.PORCERAN) CS_COMISIONDERECHOR, SUM(A.PAGO_BONO) CS_ISRCOMDERECHOR, SUM(A.PAGO_FINAL) CS_IVARETDERECHOR, BT.NUMPRELIQ NUMPRELIQUI, A.NMPAGO XPAG FROM VBON_DESGLOSE A , MRECIBO B, bon_tpagliq BT, tsia_movudi TM WHERE bt.saldo = tm.ptimport AND bt.cdconc = tm.cdconc AND bt.cdagprou = tm.cdprovee AND BT.NUMPRELIQ = TM.NUMPRELIQ AND A.CDTIPMOV = 'APL' AND A.CDVIDA = 'D' AND A.NMBONO = BT.NMBONO AND A.NMPAGO = BT.NMPAGO AND BT.STATUSP = 'S' AND trunc(TM.FEMOVIMI) BETWEEN TO_DATE('{desde}', 'dd/mm/yyyy') AND TO_DATE('{hasta}', 'dd/mm/yyyy') AND B.CDUNIECO = A.CDUNIECO AND B.CDRAMO = A.CDRAMO AND B.ESTADO = 'M' AND B.NMPOLIZA = A.NMPOLIZA AND B.NMRECIBO = A.NMRECIBO AND TM.CDPROVEE = '{codigo}' GROUP BY A.NMPAGO, BT.NUMPRELIQ, a.tipocamb, a.nmbono, A.CDPROVEE, A.CDMONEDA, trunc(A.femovimi), A.CDUNIECO, A.CDRAMO, A.NMPOLIZA, A.NMRECIBO, cdgrupo, cdsubgrp, A.PRIMA_RECIBO, A.PRIMA_CONVER, A.PRIMA_APLICAR, A.PRIMA_PAGO, A.PORCERAN, A.PAGO_BONO, A.PAGO_FINAL, B.FEINICIO , B.FEFINAL HAVING SUM(A.PAGO_FINAL) <> 0 ORDER BY 1, 2, 3, 4, 5, 6 )"
 		if tabla == 3:
 			query = f"SELECT CONCEPTO,IMPORTE FROM ( SELECT a.cdprovee cdpromot1, a.cdmoneda moneda, DECODE(a.cdconc,'PC',1999,a.cdcvemov) movimiento, DECODE(a.cdconc,'PC',1999,a.cdcvemov) movimiento2, decode(a.cdconc,'N','Prestación de Servicios Neta' , 'V','IVA de Prestación de Servicios' , 'Q','IVA RET de Prestación de Servicios', decode(a.cdconc, 'IC','Imp Ced de Prestación de Servicios', 'I','ISR de Prestación de Servicios', 'PC','Pago de Prestación de Servicios', b.dsconc ) ) concepto, DECODE(a.cdconc,'PC',1999,b.numprior) numprior, a.cdconc, SUM(a.ptimport) importe FROM tsia_movudi a, tsia_tipmovi b WHERE TRUNC(a.femovimi) BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdcvemov = b.cdcvemov AND a.cdconc = b.cdconc AND b.afedocta = 'S' AND a.cdcvemov < 1000 AND a.cdprovee = '{codigo}' HAVING SUM(a.ptimport) <> 0 GROUP BY a.cdprovee, a.cdmoneda, a.cdcvemov, a.cdconc, b.dsconc, b.numprior, a.cdconc ORDER BY a.cdmoneda, DECODE(a.cdconc,'PC',999,a.cdcvemov), DECODE(a.cdconc,'PC',100,b.numprior) )"
-		if tabla == 5:
+		if tabla == 4:
 			query = f"SELECT CONCEPTO1,IMPORTE1 FROM ( SELECT cdprovee cdpromot, a.cdmoneda moneda1, DECODE(a.cdconc,'PC',1999,a.cdcvemov) movimiento1, decode(a.cdconc,'N','Prestación de Servicios Neta' , 'V','IVA de Prestación de Servicios' , 'Q','IVA RET Prestación de Servicios', decode(a.cdconc,'IC','Imp Ced de Prestación de Servicios', 'I','ISR de Prestación de Servicios' , 'PC','Pago de Prestación de Servicios', b.dsconc ) ) concepto1, DECODE(a.cdconc,'PC',1999,b.numprior) numprior1, a.cdconc cdconc1, SUM(a.ptimport) importe1 FROM tsia_movudi a, tsia_tipmovi b WHERE TRUNC(a.femovimi) BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdcvemov = b.cdcvemov AND a.cdconc = b.cdconc AND b.afedocta = 'S' AND a.cdcvemov > 1000 AND a.cdprovee = '{codigo}' HAVING SUM(a.ptimport) <> 0 GROUP BY a.cdprovee, a.cdmoneda, a.cdcvemov, a.cdconc, b.dsconc, b.numprior, a.cdconc ORDER BY a.cdmoneda, DECODE(a.cdconc,'PC',1999,a.cdcvemov), DECODE(a.cdconc,'PC',1999,b.numprior) )"
 		if tabla == 7:
 			query = f"SELECT TO_CHAR(FEMOVIMIPC,'DD/MM/YYYY') FEMOVIMIPC, DANIOSPC, VIDAPC, TOTALPC FROM ( SELECT cdprovee promotorpc, cdmoneda monedapc, trunc(femovimi ) femovimipc, SUM(DECODE(cdcvemov,600,ptimport,0)) daniospc, SUM(DECODE(cdcvemov,1600,ptimport,0)) vidapc, SUM(ptimport) totalpc FROM tsia_movudi WHERE cdcvemov IN (600, 1600) AND TRUNC(femovimi) BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND CDPROVEE = '{codigo}' GROUP BY CDPROVEE, cdmoneda, trunc(femovimi) ORDER BY CDPROVEE, cdmoneda,trunc( femovimi))"
@@ -391,7 +391,7 @@ def getcolumnstosum(c_count):
 def getcolumnstosum_udi(c_count):
 	if c_count in [1, 2]:
 		return [1,2,3,4,5,6,7]
-	if c_count in [4, 6]:
+	if c_count in [5, 6]:
 		return [10,11,13,14]
 	if c_count in [7]:
 		return [1,2,3]
