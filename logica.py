@@ -353,7 +353,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		libro_nombre =P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_comisiones.pdf'
 
 		virtual_wb = BytesIO()
-		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((518.4*mm, 672*mm)),topMargin=45*mm)
+		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((539.75 * mm, 698.5 * mm)),topMargin=45*mm)
 		flowables = []
 		app.logger.info("Leyendo cursor de cabecera")
 		for row in cursors[0]:
@@ -514,6 +514,10 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						style_for_f_new_table.add('FONTNAME', (0, styl_new_count), (-1, styl_new_count), 'Arial')
 					styl_new_count += 1
 					data_for_f_new_table.append(row)
+				if c_count==1:
+					data_for_f_new_table.append(['','',''])
+					style_for_f_new_table.add('BACKGROUND', (0, styl_new_count), (-1, styl_new_count), colors.white)
+					styl_new_count += 1
 			if c_count ==2:
 				tbl = Table(data_for_f_new_table)
 				tbl.setStyle(style_for_f_new_table)
@@ -597,7 +601,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 
 		app.logger.info("Cargados todos los cursores.")
 		virtual_wb = BytesIO()
-		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((518.4*mm, 672*mm)),topMargin=45*mm)
+		doc = SimpleDocTemplate(virtual_wb,pagesize=landscape((539.75 * mm, 698.5 * mm)),topMargin=45*mm)
 		flowables = []
 		libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.pdf'
 		app.logger.info("Leyendo cursor de cabecera")
@@ -909,7 +913,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		libro_nombre = P_Clave + "_" + P_Feini.replace("/", "") + "_" + P_Fefin.replace("/", "") + '_udi.pdf'
 
 		virtual_wb = BytesIO()
-		doc = SimpleDocTemplate(virtual_wb, pagesize=landscape((518.4 * mm, 672 * mm)), topMargin=45 * mm)
+		doc = SimpleDocTemplate(virtual_wb, pagesize=landscape((539.75 * mm, 698.5 * mm)), topMargin=45 * mm)
 		flowables = []
 		app.logger.info("Leyendo cursor de cabecera")
 		for row in cursors[0]:
@@ -1362,8 +1366,8 @@ class PageNumCanvas(canvas.Canvas):
 		canvas.Canvas.save(self)
 
 	def draw_page_number(self, page_count):
-		ancho_page = 672
-		largo_page = 518.4
+		ancho_page = 698.5
+		largo_page = 539.75
 		tahora= datetime.datetime.now(timezone('UTC'))
 		now_mexico = tahora.astimezone(timezone('America/Mexico_City'))
 		page = "Pagina %s de %s" % (self._pageNumber, page_count)
