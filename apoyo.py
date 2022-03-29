@@ -11,7 +11,7 @@ def getHeadColumnsBonos(extension,tipo):
 		lista.append('Grupo')
 		lista.append('Oficina')
 		lista.append('Ramo')
-		lista.append('Poliza')
+		lista.append('Póliza')
 		lista.append('Contratante')
 		lista.append('Agentes')
 		lista.append('Computabilidad')
@@ -58,7 +58,7 @@ def getHeadColumnsUDI(extension,cursor):
 		lista.append('Subgrupo')
 		lista.append('Oficina')
 		lista.append('Ramo')
-		lista.append('Poliza')
+		lista.append('Póliza')
 		lista.append('Prestador')
 		lista.append('Contratante')
 		lista.append('Tipo de Cambio')
@@ -67,11 +67,11 @@ def getHeadColumnsUDI(extension,cursor):
 		lista.append('Prima Neta')
 		lista.append('Prima Convertida')
 		lista.append('% Pago Prest. Servicio')
-		lista.append('Monto Comision Neta')
+		lista.append('Monto Comisión Neta')
 		lista.append('Total Comisión pagado')
-		lista.append('# Liquidacion')
+		lista.append('# Liquidación')
 		lista.append('# Comprobante')
-		lista.append('Fecha aplicacion')
+		lista.append('Fecha aplicación')
 	return lista
 
 
@@ -98,7 +98,7 @@ def getHeadColumnsComisones(extension,cursor):
 			lista.append("Grupo")
 		lista.append("Oficina")
 		lista.append("Ramo")
-		lista.append("Poliza")
+		lista.append("Póliza")
 		lista.append("Contratante")
 		lista.append("Clave Agente")
 		lista.append("Tipo de Cambio")
@@ -164,7 +164,7 @@ def getTableNamesUDI(tabla):
 	if tabla == 6:
 		return "DETALLE VIDA"
 	if tabla == 7:
-		return "RESUMEN DE DEPOSITOS MXP"
+		return "RESUMEN DE DEPÓSITOS MXP"
 	return nombre
 
 
@@ -187,9 +187,9 @@ def getTableNamesComisiones(tabla):
 	if tabla in [7,8]:
 		return "CONCEPTOS DE VIDA"
 	if tabla == 11:
-		return "RESUMEN DE DEPOSITOS EN MXP"
+		return "RESUMEN DE DEPÓSITOS EN MXP"
 	if tabla == 12:
-		return "RESUMEN DE DEPOSITOS EN USD"
+		return "RESUMEN DE DEPÓSITOS EN USD"
 	return nombre
 
 
