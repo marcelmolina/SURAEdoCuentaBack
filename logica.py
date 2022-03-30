@@ -208,10 +208,6 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						ws.cell(row=f, column=i + 1).value = valor
 						ws.cell(row=f, column=i + 1).border= Border(left=Side(style='thin'), right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
 					else:
 						valor = row[i]
 						if i in [10, 11, 14, 15]:
@@ -231,10 +227,6 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						ws.cell(row=f, column=i + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
 																	 top=Side(style='thin'), bottom=Side(style='thin'))
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
 				f += 1
 			#cursor.close()
 			if c_count in [5, 6, 9, 10] and has_data:
@@ -691,6 +683,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		doc.build(flowables,canvasmaker=PageNumCanvas)
 		return True,"",virtual_wb.getvalue(),"application/pdf", libro_nombre
 	except Exception as ex:
+		app.logger.error(ex)
 		return False, 'Error generando el reporte.', 0, 0,0
 
 
@@ -788,10 +781,6 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 																 top=Side(style='thin'), bottom=Side(style='thin'))
 					ws.cell(row=14 + j, column=i + 1 + aux).alignment = Alignment(horizontal="center",
 																				  vertical="center")
-					if len(str(valor)) > 17:
-						ws.cell(row=14 + j, column=i + 1 + aux).font = Font(name='Arial', size=8)
-						if len(str(valor)) > 25:
-							ws.cell(row=14 + j, column=i + 1 + aux).font = Font(name='Arial', size=7)
 				else:
 					if i == 21:
 						if row[i] == 'NO':
@@ -1230,10 +1219,6 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						ws.cell(row=f, column=i + 1).value = valor
 						ws.cell(row=f, column=i + 1).border= Border(left=Side(style='thin'), right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
 					else:
 						valor = row[i]
 						if i==2:
@@ -1261,10 +1246,6 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						ws.cell(row=f, column=i + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
 																	 top=Side(style='thin'), bottom=Side(style='thin'))
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
-						if len(str(valor)) > 17:
-							ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=8)
-							if len(str(valor)) > 25:
-								ws.cell(row=f, column=i + 1).font = Font(name='Arial', size=7)
 				f += 1
 			#cursor.close()
 			if c_count in [5,6] and has_data:
