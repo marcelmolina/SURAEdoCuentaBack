@@ -77,7 +77,7 @@ def getconexion(app):
 		sid = cx_Oracle.makedsn(host, port, service_name=service_name)
 		try:
 			connection = cx_Oracle.connect(f"{user}/{password}@{host}:{port}/{service_name}")
-			return True,"",connection
+			return True,schema,connection
 		except Exception as ex:
 			app.logger.error(ex)
 			return False, 'Error en la conexion con la base de datos.', 0
@@ -588,7 +588,7 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		cur1.execute(query1)
 		statement = connection.cursor()
 		c_det = connection.cursor()
-		statement.execute("begin  PKG_MUI_ESTADOS_DE_CUENTA_1.P_DET_PADRE( :Pb_CODIGO,:Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_det  ); end;",
+		statement.execute(f"begin  {con_mssg}.PKG_MUI_ESTADOS_DE_CUENTA_1.P_DET_PADRE( :Pb_CODIGO,:Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_det  ); end;",
 			c_det = c_det,  Pb_CODIGO = str(P_COD) ,Pb_AGENTE = str(P_Clave) ,Pb_FEINI = P_Feini, Pb_FEFIN = P_Fefin)
 
 		app.logger.info("Cargados todos los cursores.")
@@ -701,7 +701,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		cur1.execute(query1)
 		statement = connection.cursor()
 		c_det = connection.cursor()
-		query1 = "begin  PKG_MUI_ESTADOS_DE_CUENTA_1.P_DET_PADRE ( :Pb_CODIGO,:Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_det  ); end;"
+		query1 = f"begin  {con_mssg}.PKG_MUI_ESTADOS_DE_CUENTA_1.P_DET_PADRE ( :Pb_CODIGO,:Pb_AGENTE, :Pb_FEINI, :Pb_FEFIN, :c_det  ); end;"
 		statement.execute(query1,
 			c_det=c_det, Pb_CODIGO=str(P_COD), Pb_AGENTE=str(P_Clave), Pb_FEINI=P_Feini, Pb_FEFIN=P_Fefin)
 
