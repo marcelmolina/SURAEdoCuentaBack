@@ -90,6 +90,8 @@ def getperiodo(P_CLAVE,P_MES,P_ANIO,app):
 		tabla = "TSIA_MOVAGEN"
 		if P_CLAVE == 'P':
 			tabla = "TSIA_MOVPROM"
+		if P_CLAVE == 'UDI':
+			tabla = "TSIA_MOVUDI"
 		con_est, con_mssg, connection = getconexion(app)
 		if not con_est:
 			return False, con_mssg, 0, 0
