@@ -1,6 +1,8 @@
 import datetime
+from types import NoneType
 
 import openpyxl as opyxl
+from cx_Oracle import Date
 from openpyxl.styles import PatternFill
 from openpyxl.styles import Font
 from openpyxl.styles import Alignment
@@ -103,8 +105,9 @@ def getperiodo(P_CLAVE,P_MES,P_ANIO,app):
 		cur1 = connection.cursor()
 		cur1.execute(query1)
 		for data in cur1:
-			entro = True
-			P_Fefin = data[0].strftime('%Y-%m-%d')
+			if isinstance(data,Date):
+				entro = True
+				P_Fefin = data[0].strftime('%Y-%m-%d')
 		if entro:
 			entro = False
 			query2 = f"SELECT MAX(femovimi) FROM {tabla} WHERE cdconc = 'SA' AND femovimi < TO_DATE('{P_Fefin}','YYYY-MM-DD')"
@@ -114,7 +117,7 @@ def getperiodo(P_CLAVE,P_MES,P_ANIO,app):
 				entro = True
 				P_Feini = data[0].strftime('%Y-%m-%d')
 		if not entro:
-			return False,"Error en la busqueda de fechas.",0,0
+			return False,"No se han encontrado fechas.",0,0
 		return True,"",P_Feini,P_Fefin
 	except Exception as ex:
 		app.logger.error(ex)
