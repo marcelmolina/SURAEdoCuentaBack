@@ -646,11 +646,11 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			has_data=True
 			lista_aux = []
 			for i in range(0, len(row)):
-				if i < 21 and i not in [9]:
+				if i < 19 and i not in [9]:
 					valor=row[i]
 					if i == 10 and int(row[i]) == 1:
 						valor=' '
-					if i == 20:
+					if i == 18:
 						if row[i] is not None:
 							auxnewdate = datetime.date.strftime(row[i], "%d/%m/%Y")
 							valor = auxnewdate
@@ -660,9 +660,9 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						valor=getTipoSubBono(int(row[i]))
 					lista_aux.append(valor)
 				if i==9:
-					if row[21]== 'NO':
+					if row[19]== 'NO':
 						lista_aux.append("Si")
-					if row[21]== 'SI':
+					if row[19]== 'SI':
 						lista_aux.append("No")
 			data_body.append(lista_aux)
 		c_det.close()
@@ -766,7 +766,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			lista_razones = []
 			for i in range(0, len(row)):
 
-				if i < 21:
+				if i < 19:
 					valor = row[i]
 					aux = 0
 					if i >= 9:
@@ -775,7 +775,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						valor = getTipoSubBono(int(row[i]))
 					if i == 10 and int(row[i]) == 1:
 						valor = ' '
-					if i == 20:
+					if i == 18:
 						if row[i] is not None:
 							auxnewdate = datetime.date.strftime(row[i], "%d/%m/%Y")
 							valor = auxnewdate
@@ -787,7 +787,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					ws.cell(row=14 + j, column=i + 1 + aux).alignment = Alignment(horizontal="center",
 																				  vertical="center")
 				else:
-					if i == 21:
+					if i == 19:
 						if row[i] == 'NO':
 							ws.cell(row=14 + j, column=10).value = 'Sí'
 						else:
@@ -798,12 +798,12 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 																	   bottom=Side(style='thin'))
 						ws.cell(row=14 + j, column=10).alignment = Alignment(horizontal="center",
 																					  vertical="center")
-					if i > 21 and row[21] == 'SI':
+					if i > 19 and row[19] == 'SI':
 						if row[i] is not None and len(row[i]) > 0:
 							lista_razones.append(row[i])
-			if row[21] == 'SI' and len(lista_razones) > 0:
+			if row[19] == 'SI' and len(lista_razones) > 0:
 				ws.cell(row=14 + j, column=11).value = ", ".join(lista_razones)
-			if row[21] == 'NO':
+			if row[19] == 'NO':
 				ws.cell(row=14 + j, column=11).value = ' '
 
 			j += 1
@@ -1006,7 +1006,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						lista_aux.append(valor)
 					else:
 						valor = row[i]
-						if i == 20:
+						if i == 18:
 							if row[i] is not None:
 								auxnewdate = datetime.date.strftime(row[i], "%d/%m/%Y")
 								valor = auxnewdate
@@ -1031,7 +1031,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			if c_count in [4]:
 				data_for_s_new_table = list(data_cursor)
 			if c_count in [1, 2, 5, 6, 7]:
-				for i in range(22):
+				for i in range(19):
 					if i in getcolumnstosum_udi(c_count):
 						fila_totales[i] = "{:,.2f}".format(fila_totales[i])
 				data_cursor.append(fila_totales)
@@ -1228,7 +1228,7 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						valor = row[i]
 						if i==2:
 							valor= getTipoSubBono(int(row[i]))
-						if i == 20:
+						if i == 18:
 							if row[i] is not None:
 								auxnewdate = datetime.date.strftime(row[i], "%d/%m/%Y")
 								valor = auxnewdate
