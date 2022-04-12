@@ -658,6 +658,8 @@ async def bonos_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							valor=' '
 					if i == 2:
 						valor=getTipoSubBono(int(row[i]))
+					if i in [17,16,14,13] and row[i] is not None:
+						valor = "{:,.2f}".format(valor)
 					lista_aux.append(valor)
 				if i==9:
 					if row[19]== 'NO':
@@ -781,6 +783,8 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							valor = auxnewdate
 						else:
 							valor= ' '
+					if i in [17,16,14,13] and row[i] is not None:
+						valor = "{:,.2f}".format(valor)
 					ws.cell(row=14 + j, column=i + 1 + aux).value = valor
 					ws.cell(row=14+j, column=i + 1+aux).border = Border(left=Side(style='thin'), right=Side(style='thin'),
 																 top=Side(style='thin'), bottom=Side(style='thin'))
