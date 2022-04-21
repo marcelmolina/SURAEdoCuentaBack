@@ -218,15 +218,15 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						if i in [10, 11, 14, 15]:
 							valor = "{:,.2f}".format(valor)
 						if i == 10:
-							fila_totales[0] += abs(row[i])
+							fila_totales[0] += row[i]
 						if i == 11:
-							fila_totales[1] += abs(row[i])
+							fila_totales[1] += row[i]
 						if i == 13:
-							fila_totales[2] += abs(row[i])
+							fila_totales[2] += row[i]
 						if i == 14:
-							fila_totales[3] += abs(row[i])
+							fila_totales[3] += row[i]
 						if i == 15:
-							fila_totales[4] += abs(row[i])
+							fila_totales[4] += row[i]
 						has_data = True
 						ws.cell(row=f, column=i + 1).value = valor
 						ws.cell(row=f, column=i + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
@@ -459,15 +459,15 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 									valor = "{:,.2f}".format(valor)
 							lista_aux.append(valor)
 							if i == 10:
-								fila_totales[8] += abs(row[i])
+								fila_totales[8] += row[i]
 							if i == 11:
-								fila_totales[9] += abs(row[i])
+								fila_totales[9] += row[i]
 							if i == 13:
-								fila_totales[11] += abs(row[i])
+								fila_totales[11] += row[i]
 							if i == 14:
-								fila_totales[12] += abs(row[i])
+								fila_totales[12] += row[i]
 							if i == 15:
-								fila_totales[13] += abs(row[i])
+								fila_totales[13] += row[i]
 				data_cursor.append(lista_aux)
 			if c_count in [3,7]:
 				data_for_s_new_table= list(data_cursor)
@@ -1023,7 +1023,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
 							else:
 								valor = "{:,.2f}".format(valor)
-							fila_totales[i] += abs(row[i])
+							fila_totales[i] += row[i]
 						lista_aux.append(valor)
 				data_cursor.append(lista_aux)
 			if c_count in [1]:
@@ -1241,15 +1241,15 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						if i in getcolumnstosum_udi(c_count):
 							valor = "{:,.2f}".format(valor)
 						if i == 12:
-							fila_totales[0] += abs(row[i])
+							fila_totales[0] += row[i]
 						if i == 13:
-							fila_totales[1] += abs(row[i])
+							fila_totales[1] += row[i]
 						if i == 14:
-							fila_totales[2] += abs(row[i])
+							fila_totales[2] += row[i]
 						if i == 16:
-							fila_totales[3] += abs(row[i])
+							fila_totales[3] += row[i]
 						if i == 17:
-							fila_totales[4] += abs(row[i])
+							fila_totales[4] += row[i]
 						has_data = True
 						ws.cell(row=f, column=i + 1).value = valor
 						ws.cell(row=f, column=i + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
