@@ -165,6 +165,7 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			app.logger.info(f"Leyendo cursor -> ({c_count})")
 			fila_totales = [0, 0, 0, 0, 0]
 			fila_totales_resumen = [0, 0, 0, 0, 0,0]
+			fila_totales_conceptos=0
 			lista = getHeadColumnsComisones("excel", c_count)
 			alphabet_string = string.ascii_uppercase
 			alphabet_list = list(alphabet_string)
@@ -224,9 +225,10 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								if i == 8:
 									fila_totales_resumen[5] += row[i]
 						has_data = True
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).border= Border(left=Side(style='thin'), right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
+						if not ( i==2 and c_count in [3,4,7,8]):
+							ws.cell(row=f, column=i + 1).value = valor
+							ws.cell(row=f, column=i + 1).border= Border(left=Side(style='thin'), right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
+							ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
 					else:
 						valor = row[i]
 						if i in [10, 11,12, 14, 15]:
@@ -249,6 +251,17 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
 				f += 1
 			#cursor.close()
+			if c_count in [3, 4, 7, 8]:
+				ws.cell(row=f, column=1).value = "SALDO FINAL"
+				ws.cell(row=f, column=1).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														 top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=2).value = fila_totales_conceptos
+				ws.cell(row=f, column=2).number_format = '#,##0.00'
+				ws.cell(row=f, column=2).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=2).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														 top=Side(style='thin'), bottom=Side(style='thin'))
+				f += 1
 			if c_count in [11,12] and has_data:
 				fila_totales_resumen[0] = "{:,.2f}".format(fila_totales_resumen[0])
 				fila_totales_resumen[1] = "{:,.2f}".format(fila_totales_resumen[1])
@@ -447,6 +460,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		style_newx2.add('FONTNAME', (0, 2), (-1, 2), 'Arial')
 		style_for_f_new_table=TableStyle(
 				[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+		fila_totales_conceptos = [0, 0]
 		for cursor in cursors:
 			tblstyle = TableStyle(
 				[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
@@ -463,8 +477,6 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				fila_totales = ["", "", "", "", "", "", "", "TOTAL", 0, 0, "", 0, 0, 0, "", ""]
 			if c_count in [1,2]:
 				fila_totales= ["TOTAL",0,0,0,0,0,0,0]
-			if c_count in [3,4,7,8]:
-				fila_totales= ["TOTAL",0]
 			if c_count in [11,12]:
 				fila_totales= ["TOTAL",0,0,0," ","TOTAL PAGADO",0,0,0]
 			numrow=1
@@ -482,29 +494,33 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				lista_aux = []
 				for i in range(0, len(row)):
 					if c_count in [1,2,3,4,7,8,11,12]:
-						valor = row[i]
-						if c_count in [1,2]:
-							if i != 0:
-								if valor < 0:
-									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
-								else:
-									valor = "{:,.2f}".format(valor)
-								fila_totales[i] += abs(row[i])
-						if c_count in [3,4,7,8]:
-							if i != 0:
-								if valor < 0:
-									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
-								else:
-									valor = "{:,.2f}".format(valor)
-								#fila_totales[i] += abs(row[i])
-						if c_count in [11,12]:
-							if i in [1,2,3,6,7,8]:
-								if valor < 0:
-									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
-								else:
-									valor = "{:,.2f}".format(valor)
-								fila_totales[i] += abs(row[i])
-						lista_aux.append(valor)
+						if not (c_count in[3,4,7,8] and i==2):
+							valor = row[i]
+							if c_count in [1, 2]:
+								if i != 0:
+									if valor < 0:
+										valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
+									else:
+										valor = "{:,.2f}".format(valor)
+									fila_totales[i] += abs(row[i])
+							if c_count in [3, 4, 7, 8]:
+								if i != 0:
+									if valor < 0:
+										valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
+									else:
+										valor = "{:,.2f}".format(valor)
+									if c_count<5:
+										fila_totales_conceptos[0] += row[2]
+									else:
+										fila_totales_conceptos[1] += row[2]
+							if c_count in [11, 12]:
+								if i in [1, 2, 3, 6, 7, 8]:
+									if valor < 0:
+										valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
+									else:
+										valor = "{:,.2f}".format(valor)
+									fila_totales[i] += abs(row[i])
+							lista_aux.append(valor)
 					else:
 						if i not in [0,1]:
 							valor = row[i]
@@ -582,7 +598,6 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				#necesito el header nuevo
 				lista_new_data=[]
 				list_header=getheaderforcompressed(data_for_s_new_table,data_for_t_new_table)
-				lista_new_data.append(list_header)
 				aux_list_1=[]
 				aux_list_1.append('MXP')
 				aux_list_2 = []
@@ -603,6 +618,19 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								aux_list_2.append(couple[1])
 						if not entro:
 							aux_list_2.append("0.00")
+				if fila_totales_conceptos[0] < 0:
+					fila_totales_conceptos[0] = "(" + "{:,.2f}".format(abs(fila_totales_conceptos[0])) + ")"
+				else:
+					fila_totales_conceptos[0] = "{:,.2f}".format(fila_totales_conceptos[0])
+				if fila_totales_conceptos[1] < 0:
+					fila_totales_conceptos[1] = "(" + "{:,.2f}".format(abs(fila_totales_conceptos[1])) + ")"
+				else:
+					fila_totales_conceptos[1] = "{:,.2f}".format(fila_totales_conceptos[1])
+				aux_list_1.append(fila_totales_conceptos[0])
+				aux_list_2.append(fila_totales_conceptos[1])
+				fila_totales_conceptos= [0,0]
+				list_header.append('SALDO FINAL')
+				lista_new_data.append(list_header)
 				lista_new_data.append(aux_list_1)
 				lista_new_data.append(aux_list_2)
 				tbl = Table(lista_new_data, hAlign='LEFT')
