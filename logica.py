@@ -209,7 +209,8 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						if c_count in [3, 4, 7, 8]:
 							if i != 0:
 								valor = "{:,.2f}".format(valor)
-								fila_totales_conceptos += row[2]
+								if i==2 :
+									fila_totales_conceptos += row[i]
 						if c_count in [11, 12]:
 							if i in [1, 2,3, 6, 7, 8]:
 								valor = "{:,.2f}".format(valor)
