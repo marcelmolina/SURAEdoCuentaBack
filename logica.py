@@ -231,7 +231,7 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
 					else:
 						valor = row[i]
-						if i in [10, 11,12, 14, 15]:
+						if i in [10, 11,12,13, 14, 15]:
 							#valor = "{:,.2f}".format(valor)
 							ws.cell(row=f, column=i + 1).number_format = '#,##0.00'
 						if i == 10:
@@ -251,7 +251,7 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
 				f += 1
 			#cursor.close()
-			if c_count in [3, 4, 7, 8]:
+			if c_count in [3, 4, 7, 8]  and has_data:
 				ws.cell(row=f, column=1).value = "SALDO FINAL"
 				ws.cell(row=f, column=1).alignment = Alignment(horizontal="center", vertical="center")
 				ws.cell(row=f, column=1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
@@ -524,7 +524,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					else:
 						if i not in [0,1]:
 							valor = row[i]
-							if i in [10, 11,12, 14, 15]:
+							if i in [10, 11,12,13, 14, 15]:
 								if valor < 0:
 									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
 								else:
