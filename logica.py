@@ -164,11 +164,12 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		for cursor in cursors:
 			app.logger.info(f"Leyendo cursor -> ({c_count})")
 			fila_totales = [0, 0, 0, 0, 0]
+			fila_totales_resumen = [0, 0, 0, 0, 0,0]
 			lista = getHeadColumnsComisones("excel", c_count)
 			alphabet_string = string.ascii_uppercase
 			alphabet_list = list(alphabet_string)
 			if len(cursor) > 0:
-				ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count)
+				ws.cell(row=f, column=1).value = getTableNamesComisiones(c_count,"excel")
 				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
 				f += 1
 				j = 0
@@ -208,15 +209,29 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							if i != 0:
 								valor = "{:,.2f}".format(valor)
 						if c_count in [11, 12]:
-							if i in [1, 3, 6, 7, 8]:
+							if i in [1, 2,3, 6, 7, 8]:
 								valor = "{:,.2f}".format(valor)
+								if i == 1:
+									fila_totales_resumen[0] += row[i]
+								if i == 2:
+									fila_totales_resumen[1] += row[i]
+								if i == 3:
+									fila_totales_resumen[2] += row[i]
+								if i == 6:
+									fila_totales_resumen[3] += row[i]
+								if i == 7:
+									fila_totales_resumen[4] += row[i]
+								if i == 8:
+									fila_totales_resumen[5] += row[i]
+						has_data = True
 						ws.cell(row=f, column=i + 1).value = valor
 						ws.cell(row=f, column=i + 1).border= Border(left=Side(style='thin'), right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
 					else:
 						valor = row[i]
-						if i in [10, 11, 14, 15]:
-							valor = "{:,.2f}".format(valor)
+						if i in [10, 11,12, 14, 15]:
+							#valor = "{:,.2f}".format(valor)
+							ws.cell(row=f, column=i + 1).number_format = '#,##0.00'
 						if i == 10:
 							fila_totales[0] += row[i]
 						if i == 11:
@@ -234,6 +249,47 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
 				f += 1
 			#cursor.close()
+			if c_count in [11,12] and has_data:
+				fila_totales_resumen[0] = "{:,.2f}".format(fila_totales_resumen[0])
+				fila_totales_resumen[1] = "{:,.2f}".format(fila_totales_resumen[1])
+				fila_totales_resumen[2] = "{:,.2f}".format(fila_totales_resumen[2])
+				fila_totales_resumen[3] = "{:,.2f}".format(fila_totales_resumen[3])
+				fila_totales_resumen[4] = "{:,.2f}".format(fila_totales_resumen[4])
+				fila_totales_resumen[5] = "{:,.2f}".format(fila_totales_resumen[5])
+				ws.cell(row=f, column=1).value = "TOTAL"
+				ws.cell(row=f, column=1).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+															 top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=2).value = fila_totales_resumen[0]
+				ws.cell(row=f, column=2).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=2).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=3).value = fila_totales_resumen[1]
+				ws.cell(row=f, column=3).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=3).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=4).value = fila_totales_resumen[2]
+				ws.cell(row=f, column=4).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=4).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=6).value = "TOTAL PAGADO"
+				ws.cell(row=f, column=6).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=6).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														 top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=7).value = fila_totales_resumen[3]
+				ws.cell(row=f, column=7).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=7).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=8).value = fila_totales_resumen[4]
+				ws.cell(row=f, column=8).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=8).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=9).value = fila_totales_resumen[5]
+				ws.cell(row=f, column=9).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=9).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				f += 1
+			#f += 1
 			if c_count in [5, 6, 9, 10] and has_data:
 				fila_totales[0] = "{:,.2f}".format(fila_totales[0])
 				fila_totales[1] = "{:,.2f}".format(fila_totales[1])
@@ -398,7 +454,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			lista = getHeadColumnsComisones("pdf", c_count)
 			data_cursor = []
 			theader=[]
-			theader.append([getTableNamesComisiones(c_count)])
+			theader.append([getTableNamesComisiones(c_count,"pdf")])
 			taux = Table(theader,hAlign='LEFT')
 			taux.setStyle(grid)
 			data_cursor.append(lista)
@@ -452,7 +508,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 					else:
 						if i not in [0,1]:
 							valor = row[i]
-							if i in [10, 11, 14, 15]:
+							if i in [10, 11,12, 14, 15]:
 								if valor < 0:
 									valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
 								else:
@@ -493,7 +549,7 @@ async def comisiones_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				style_for_f_new_table.add('SPAN', (0, styl_new_count), (7, styl_new_count))
 				style_for_f_new_table.add('FONTNAME', (0, styl_new_count), (-1, styl_new_count), 'Arial_Bold')
 				style_for_f_new_table.add('TEXTCOLOR', (0, styl_new_count), (-1, styl_new_count), colors.black)
-				data_for_f_new_table.append([getTableNamesComisiones(c_count),' ',' ',' ',' ',' ',' ',' '])
+				data_for_f_new_table.append([getTableNamesComisiones(c_count,"pdf"),' ',' ',' ',' ',' ',' ',' '])
 				styl_new_count += 1
 				first=True
 				for row in data_cursor:
@@ -784,7 +840,8 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						else:
 							valor= ' '
 					if i in [17,16,14,13] and row[i] is not None:
-						valor = "{:,.2f}".format(valor)
+						#valor = "{:,.2f}".format(valor)
+						ws.cell(row=14 + j, column=i + 1 + aux).number_format = '#,##0.00'
 					ws.cell(row=14 + j, column=i + 1 + aux).value = valor
 					ws.cell(row=14+j, column=i + 1+aux).border = Border(left=Side(style='thin'), right=Side(style='thin'),
 																 top=Side(style='thin'), bottom=Side(style='thin'))
@@ -1239,7 +1296,8 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 							else:
 								valor = ' '
 						if i in getcolumnstosum_udi(c_count):
-							valor = "{:,.2f}".format(valor)
+							#valor = "{:,.2f}".format(valor)
+							ws.cell(row=f, column=i + 1).number_format = '#,##0.00'
 						if i == 12:
 							fila_totales[0] += row[i]
 						if i == 13:

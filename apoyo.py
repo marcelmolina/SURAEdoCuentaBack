@@ -82,7 +82,7 @@ def getHeadColumnsComisones(extension,cursor):
 		lista.append("BASE")
 		lista.append("IVA")
 		lista.append("SUBTOTAL")
-		lista.append("IVARETENIDO")
+		lista.append("IVA RETENIDO")
 		lista.append("ISR")
 		lista.append("IMP. CEDULAR")
 		lista.append("TOTAL")
@@ -122,7 +122,7 @@ def getHeadColumnsComisones(extension,cursor):
 		lista.append("TOTAL")
 		lista.append("FECHA DE PAGO")
 		lista.append("NUMERO DE COMPROBANTE")
-		lista.append("IMPORTEPAGADO DAÑOS")
+		lista.append("IMPORTE PAGADO DAÑOS")
 		lista.append("IMPORTE PAGADO VIDA")
 		lista.append("TOTAL")
 		return lista
@@ -168,14 +168,20 @@ def getTableNamesUDI(tabla):
 	return nombre
 
 
-def getTableNamesComisiones(tabla):
+def getTableNamesComisiones(tabla,tipo):
 	nombre=[]
 	if tabla == 1:
 		return "TOTAL DE PERCEPCIONES MENSUALES"
 	if tabla == 2:
 		return "TOTAL DE PERCEPCIONES ACUMULADO ANUAL"
 	if tabla in [3,4]:
-		return "CONCEPTOS DE DAÑOS"
+		if tipo=="pdf":
+			return "CONCEPTOS DE DAÑOS"
+		else:
+			if tabla==3:
+				return "CONCEPTOS DE DAÑOS MXP"
+			if tabla==4:
+				return "CONCEPTOS DE DAÑOS USD"
 	if tabla in [5]:
 		return "DAÑOS MONEDA MXP"
 	if tabla in [6]:
@@ -425,7 +431,7 @@ def get_tablas_referencia():
 	bonos = []
 	bono_style=[]
 	#bonos
-	bonos.append(['BONO POR EXCEPCION', ' ', 'BONO POR PORTAFOLIO', ' ','BONO CUADERNILLO', ' ', 'BONO PRESTADOR DE SERVICIO', ' '])
+	bonos.append(['BONO POR EXCEPCIÓN', ' ', 'BONO POR PORTAFOLIO', ' ','BONO CUADERNILLO', ' ', 'BONO PRESTADOR DE SERVICIO', ' '])
 	bonos.append(['ABREVIATURA', 'TIPO DE BONO', 'ABREVIATURA', 'TIPO DE BONO','ABREVIATURA', 'TIPO DE BONO', 'ABREVIATURA', 'TIPO DE BONO'])
 	bonos.append(['BS', 'BONO SINIESTRALIDAD', 'BC', 'BONO CRECIMIENTO','BP', 'BONO PRODUCCION', 'BP', 'BONO PRODUCCION'])
 	bonos.append(['BP', 'BONO PRODUCCION', 'BP', 'BONO PRODUCCION', 'BS', 'BONO SINIESTRALIDAD', 'BPS', 'BONO PROD+SINIES'])
@@ -454,8 +460,8 @@ def get_tablas_referencia():
 		bono_style.add('TEXTCOLOR', (0, i + 2), (-1, i + 2), colors.black)
 		bono_style.add('FONTNAME', (0, i + 2), (-1, i + 2), 'Arial')
 	#ramos
-	ramos.append(['CATALOGOS', ' ', ' ', ' ',' ', ' ', ' ', ' '])
-	ramos.append(['CODIGO', 'DESCRIPCION', 'CODIGO', 'DESCRIPCION','CODIGO', 'DESCRIPCION', 'CODIGO', 'DESCRIPCION'])
+	ramos.append(['CATÁLOGOS DE RAMOS', ' ', ' ', ' ',' ', ' ', ' ', ' '])
+	ramos.append(['CÓDIGO', 'DESCRIPCIÓN', 'CÓDIGO', 'DESCRIPCIÓN','CÓDIGO', 'DESCRIPCIÓN', 'CÓDIGO', 'DESCRIPCIÓN'])
 	ramos.append(['101', 'INCENDIO', '105', 'TERREMOTO Y ERUPCIÓN VOLCÁNICA', '201', 'AUTOS RESIDENTES', '202', 'CAMIONES'])
 	ramos.append(['203', 'TURISTAS', '204', 'AUTOBUSES', '205', 'MOTOCICLETAS', '206', 'SUVA'])
 	ramos.append(['210', 'PRUEBAS DE AUTOS', '211', 'MOTOR TECHNICAL PRICING', '220', 'TAXIS', '301', 'TRANSPORTES CARGA'])
