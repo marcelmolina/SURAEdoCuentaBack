@@ -20,6 +20,7 @@ from io import BytesIO
 import cx_Oracle
 import os
 from dotenv import load_dotenv
+from apoyo import get_sura_address
 from apoyo import getTableNamesUDI
 from apoyo import getHeadColumnsUDI
 from apoyo import get_tablas_referencia
@@ -147,6 +148,9 @@ async def comisiones_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		ws.title = "Estado de Cuenta de Comisiones"
 		has_agent = False
 		app.logger.info("Leyendo cursor de cabecera")
+		x,y=get_sura_address("excel")
+		ws.cell(row=6, column=2).value = x
+		ws.cell(row=7, column=1).value = y
 		for row in cursors[0]:
 			has_agent = True
 			for i in range(0, len(row) - 4):
@@ -808,6 +812,9 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 
 		libro_nombre = P_Clave+"_" + P_Feini.replace("/", "")+"_"+ P_Fefin.replace("/", "")+'_bonos.xlsx'
 		app.logger.info("Leyendo cursor de cabecera")
+		x, y = get_sura_address("excel")
+		ws.cell(row=6, column=2).value = x
+		ws.cell(row=7, column=1).value = y
 		for row in cur1:
 			has_agent = True
 			for i in range(0, len(row) - 4):
@@ -1251,6 +1258,9 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		ws.title = "Estado de Cuenta de Bonos"
 		has_agent = False
 		app.logger.info("Leyendo cursor de cabecera")
+		x, y = get_sura_address("excel")
+		ws.cell(row=6, column=2).value = x
+		ws.cell(row=7, column=1).value = y
 		for row in cursors[0]:
 			has_agent = True
 			for i in range(0, len(row) - 4):
@@ -1444,14 +1454,15 @@ class PageNumCanvas(canvas.Canvas):
 		canvas.Canvas.save(self)
 
 	def draw_page_number(self, page_count):
+		x,y=get_sura_address("pdf")
 		ancho_page = 698.5
 		largo_page = 539.75
 		tahora= datetime.datetime.now(timezone('UTC'))
 		now_mexico = tahora.astimezone(timezone('America/Mexico_City'))
 		page = "Pagina %s de %s" % (self._pageNumber, page_count)
 		self.setFont("Arial", 11)
-		self.drawRightString((ancho_page - 25) * mm, (largo_page - 23) * mm, "Blvd. Adolfo López Mateos No. 2448 / Col. Alta Vista Deleg. Alvaro Obregón / C. P. 01060 México, D. F.")
-		self.drawRightString((ancho_page - 25) * mm, (largo_page - 31) * mm, "Tel. 57-23-79-99, 01-800-723-79-00")
+		self.drawRightString((ancho_page - 25) * mm, (largo_page - 23) * mm, x)
+		self.drawRightString((ancho_page - 25) * mm, (largo_page - 31) * mm, y)
 		self.setFont("Arial_Bold", 11)
 		self.drawRightString((ancho_page - 25) * mm, (largo_page - 15) * mm, "Seguros SURA, S. A. de C. V.")
 		self.setFont("Arial", 11)

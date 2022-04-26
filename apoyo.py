@@ -1,6 +1,7 @@
 from reportlab.lib import colors
 from reportlab.platypus import TableStyle
-
+from dotenv import load_dotenv
+import os
 
 def getHeadColumnsBonos(extension,tipo):
 	lista = []
@@ -369,6 +370,8 @@ def getheaderquery(clave,codigo,desde,hasta):
 	return str
 
 def getheaderpdf(tipo,lista_aux,reporte):
+	x,y= get_sura_address("pdf")
+	z= x.split(" / ",1)
 	identificador = "Agente"
 	if tipo == 'P':
 		identificador = "Promotor"
@@ -377,8 +380,8 @@ def getheaderpdf(tipo,lista_aux,reporte):
 	return [("   ", "   ", " ", "   ", "   "),
 				("Nombre del SAT para Sura:", "Seguros SURA S.A. de C.V", "     ", f"Nombre del {identificador}:", lista_aux[0]),
 				("RFC de Sura:", "R.F.C R&S-811221KR6", "   ", f"Clave del {identificador}:", lista_aux[1]),
-				("Domicilio Sura:", "Blvd. Adolfo López Mateos No. 2448", "   ", f"RFC del {identificador}:", lista_aux[2]),
-				(" ", "Col. Altavista C.P. 01060 Ciudad de México.", "   ", f"Domicilio del {identificador}:", lista_aux[3]),
+				("Domicilio Sura:", z[0], "   ", f"RFC del {identificador}:", lista_aux[2]),
+				(" ", z[1], "   ", f"Domicilio del {identificador}:", lista_aux[3]),
 				("Periodo de corte:", " ", "   ", "Tipo de productor:", lista_aux[4]),
 				("Desde:", lista_aux[9], "   ", "Promotoría a la que pertenece:", lista_aux[5]),
 				("Hasta:", lista_aux[10], "   ", "Clave de productor:", lista_aux[6]),
@@ -423,6 +426,16 @@ def getheaderforcompressed(lista,listab):
 				listaresp.append(vaux)
 	listaresp[0]= 'Moneda'
 	return listaresp
+
+def get_sura_address(tipo):
+	load_dotenv()
+	SURA_ADDRESS_1 = os.getenv('SURA_ADDRESS_1')
+	SURA_ADDRESS_2 = os.getenv('SURA_ADDRESS_2')
+	if tipo == "pdf":
+		return SURA_ADDRESS_1,SURA_ADDRESS_2
+	if tipo == "excel":
+		x= SURA_ADDRESS_1.split(" / ",1)
+		return x[0],x[1]
 
 
 def get_tablas_referencia():
