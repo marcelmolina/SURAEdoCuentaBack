@@ -25,10 +25,10 @@ def getHeadColumnsBonos(extension,tipo):
 		lista.append('Prima Neta')
 		lista.append('% Bono Pagado')
 		lista.append('Monto comisión neta')
-		lista.append('Total comisión pagada')
+		lista.append('Total bono pagado')
 		#lista.append('# Liquidación')
 		#lista.append('# Comprobante')
-		lista.append('Fecha aplicación de la póliza')
+		lista.append('Fecha aplicación en la póliza')
 	return lista
 
 
@@ -36,12 +36,11 @@ def getHeadColumnsUDI(extension,cursor):
 	lista = []
 	if cursor in [1, 2]:
 		lista.append('Tipo')
+		lista.append('Base')
 		lista.append('IVA')
-		lista.append('IVA Retenido')
 		lista.append('Subtotal')
+		lista.append('IVA Retenido')
 		lista.append('ISR')
-		lista.append('Impuesto Cedular')
-		lista.append('Honorarios')
 		lista.append('Total')
 	if cursor in [3, 4]:
 		lista.append('CONCEPTO')
@@ -63,7 +62,7 @@ def getHeadColumnsUDI(extension,cursor):
 		lista.append('Prestador')
 		lista.append('Contratante')
 		lista.append('Tipo de Cambio')
-		lista.append('Recibo')
+		lista.append('# Recibo')
 		lista.append('Prima Total')
 		lista.append('Prima Neta')
 		lista.append('Prima Convertida')
@@ -72,7 +71,7 @@ def getHeadColumnsUDI(extension,cursor):
 		lista.append('Total Comisión pagado')
 		#lista.append('# Liquidación')
 		#lista.append('# Comprobante')
-		lista.append('Fecha aplicación')
+		lista.append('Fecha de aplicación en la póliza')
 	return lista
 
 
@@ -150,18 +149,24 @@ def getTipoSubBono(id):
 		return "BD"
 	return codigo
 
-def getTableNamesUDI(tabla):
+def getTableNamesUDI(tabla,tipo):
 	nombre= ""
 	if tabla == 1:
 		return "TOTAL DE PERCEPCIONES MENSUALES"
 	if tabla == 2:
-		return "TOTAL DE PERCEPCIONES MENSUALES"
+		return "TOTAL DE PERCEPCIONES ANUALES"
 	if tabla == 3:
-		return "CONCEPTOS DE DAÑO/VIDA"
+		if tipo == "pdf":
+			return "CONCEPTOS DE DAÑO/VIDA"
+		else:
+			return "CONCEPTOS DE DAÑO"
 	if tabla == 5:
 		return "DETALLE DAÑO"
 	if tabla == 4:
-		return "CONCEPTOS DE DAÑO/VIDA"
+		if tipo == "pdf":
+			return "CONCEPTOS DE DAÑO/VIDA"
+		else:
+			return "CONCEPTOS DE DAÑO"
 	if tabla == 6:
 		return "DETALLE VIDA"
 	if tabla == 7:
@@ -206,13 +211,13 @@ def getquery(clave,tipo,tabla,codigo,desde,hasta):
 		if tabla == 0:
 			query = getheaderquery('UDI', codigo, desde, hasta)
 		if tabla == 1:
-			query = f"SELECT TIPO,IVA,IVA_RETENIDO,(IVA+IVA_RETENIDO) CF_SUBTOTAL, ISR,IMPUESTO_CEDULAR,HONORARIOS, ((IVA+IVA_RETENIDO)+ISR+IMPUESTO_CEDULAR+HONORARIOS) CF_TOTAL FROM( SELECT A.CDPROVEE cdpromot, 'DAÑOS' tipo, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'V',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'V',NVL(a.ptimport,0),0),0)),0)) IVA, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'R',NVL(a.ptimport,0),0),0) * " \
+			query = f"SELECT TIPO,HONORARIOS,(IVA+IVA_RETENIDO) CF_IVA,(HONORARIOS+IVA+IVA_RETENIDO) CF_SUBTOTAL, IVA_RETENIDO,ISR, ((IVA+IVA_RETENIDO)+ISR+IMPUESTO_CEDULAR+HONORARIOS) CF_TOTAL FROM( SELECT A.CDPROVEE cdpromot, 'DAÑOS' tipo, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'V',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'V',NVL(a.ptimport,0),0),0)),0)) IVA, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'R',NVL(a.ptimport,0),0),0) * " \
 					f"(SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'R',NVL(a.ptimport,0),0),0)),0)) IVA_RETENIDO, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'I',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) " \
 					f"AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'I',NVL(a.ptimport,0),0),0)),0)) ISR, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'C',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'C',NVL(a.ptimport,0),0),0)),0)) IMPUESTO_CEDULAR, " \
 					f"(NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'T',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + " \
 					f"NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'T',NVL(a.ptimport,0),0),0)),0)) HONORARIOS FROM tsia_movUDI a, tsia_tipmovi b WHERE a.cdcvemov < 1000 AND a.cdconc = b.cdconc AND a.cdcvemov = b.cdcvemov AND b.swconinm IN ('C','I','R','V','T') AND TRUNC(a.femovimi) BETWEEN TO_DATE('{desde}','dd/mm/yyyy') AND TO_DATE('{hasta}','dd/mm/yyyy') AND a.cdprovee = '{codigo}' GROUP BY a.cdprovee)"
 		if tabla == 2:
-			query = f"SELECT TIPO,IVA,IVA_RETENIDO,(IVA+IVA_RETENIDO) CF_SUBTOTAL, ISR, HONORARIOS, ((IVA+IVA_RETENIDO)+ISR+IMPUESTO_CEDULAR+HONORARIOS) CF_TOTAL FROM( SELECT a.cdprovee cdpromot, 'VIDA' tipo, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'V',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'V',NVL(a.ptimport,0),0),0)),0)) IVA, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'R',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T" \
+			query = f"SELECT TIPO,HONORARIOS,(IVA+IVA_RETENIDO) CF_IVA,(HONORARIOS+IVA+IVA_RETENIDO) CF_SUBTOTAL, IVA_RETENIDO,ISR, ((IVA+IVA_RETENIDO)+ISR+IMPUESTO_CEDULAR+HONORARIOS) CF_TOTAL FROM( SELECT a.cdprovee cdpromot, 'VIDA' tipo, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'V',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'V',NVL(a.ptimport,0),0),0)),0)) IVA, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'R',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T" \
 					f" WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'R',NVL(a.ptimport,0),0),0)),0)) IVA_RETENIDO, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'I',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND " \
 					f"C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'I',NVL(a.ptimport,0),0),0)),0)) ISR, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'C',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + NVL(SUM(DECODE(a.cdmoneda,'MXP',DECODE(b.swconinm,'C',NVL(a.ptimport,0),0),0)),0)) IMPUESTO_CEDULAR, (NVL(SUM(DECODE(a.cdmoneda,'USD',DECODE(b.swconinm,'T',NVL(a.ptimport,0),0),0) * (SELECT C.PTCAMBIO FROM (SELECT DISTINCT R.FEMOVIMI FEINICIO, MIN(T.FEMOVIMI) - 1 FEFINAL FROM tsia_movudi R, tsia_movudi T " \
 					f"WHERE R.cdprovee = '{codigo}' AND R.CDCONC = 'SA' AND R.FEMOVIMI >= (SELECT MAX(U.femovimi) FROM tsia_movudi U WHERE U.cdconc = 'SA' AND U.femovimi < TRUNC(TO_DATE('{hasta}', 'DD-MM-YYYY'), 'YYYY')) AND T.cdprovee = R.cdprovee AND T.CDCVEMOV = R.CDCVEMOV AND T.CDCONC = R.CDCONC AND T.FEMOVIMI > R.FEMOVIMI GROUP BY R.FEMOVIMI) T, TCAMBIOS C WHERE A.FEMOVIMI BETWEEN T.FEINICIO AND FEFINAL AND C.CDMONEDA = 'MXP' AND C.CDMONBAS = 'USD' AND C.FEVALOR = TRUNC(ADD_MONTHS(T.FEFINAL, 1), 'MM'))),0) + " \
@@ -400,7 +405,7 @@ def getcolumnstosum(c_count):
 
 def getcolumnstosum_udi(c_count):
 	if c_count in [1, 2]:
-		return [1,2,3,4,5,6,7]
+		return [1,2,3,4,5,6]
 	if c_count in [5, 6]:
 		return [12,13,14,16,17]
 	if c_count in [7]:
@@ -444,6 +449,7 @@ def get_tablas_referencia():
 	bonos = []
 	bono_style=[]
 	#bonos
+	bonos.append(['CATÁLOGO DE BONOS', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
 	bonos.append(['BONO POR EXCEPCIÓN', ' ', 'BONO POR PORTAFOLIO', ' ','BONO CUADERNILLO', ' ', 'BONO PRESTADOR DE SERVICIO', ' '])
 	bonos.append(['ABREVIATURA', 'TIPO DE BONO', 'ABREVIATURA', 'TIPO DE BONO','ABREVIATURA', 'TIPO DE BONO', 'ABREVIATURA', 'TIPO DE BONO'])
 	bonos.append(['BS', 'BONO SINIESTRALIDAD', 'BC', 'BONO CRECIMIENTO','BP', 'BONO PRODUCCION', 'BP', 'BONO PRODUCCION'])
@@ -455,25 +461,29 @@ def get_tablas_referencia():
 
 	bono_style = TableStyle(
 		[('GRID', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
-	bono_style.add('SPAN', (0, 0), (1, 0))
-	bono_style.add('SPAN', (2, 0), (3, 0))
-	bono_style.add('SPAN', (4, 0), (5, 0))
-	bono_style.add('SPAN', (6, 0), (7, 0))
+	bono_style.add('SPAN', (0, 0), (7, 0))
 	bono_style.add('BACKGROUND', (0, 0), (-1, 0), '#008080')
 	bono_style.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
 	bono_style.add('TEXTCOLOR', (0, 0), (-1, 0), colors.white)
-	bono_style.add('BACKGROUND', (0, 1), (-1, 1), '#10b0c2')
+	bono_style.add('SPAN', (0, 1), (1, 1))
+	bono_style.add('SPAN', (2, 1), (3, 1))
+	bono_style.add('SPAN', (4, 1), (5, 1))
+	bono_style.add('SPAN', (6, 1), (7, 1))
+	bono_style.add('BACKGROUND', (0, 1), (-1, 1), '#008080')
 	bono_style.add('FONTNAME', (0, 1), (-1, 1), 'Arial_Bold')
 	bono_style.add('TEXTCOLOR', (0, 1), (-1, 1), colors.white)
+	bono_style.add('BACKGROUND', (0, 2), (-1, 2), '#10b0c2')
+	bono_style.add('FONTNAME', (0, 2), (-1, 1), 'Arial_Bold')
+	bono_style.add('TEXTCOLOR', (0, 2), (-1, 2), colors.white)
 	for i in range(6):
 		vcolor = '#e8eaea'
 		if i % 2 == 0:
 			vcolor = '#e2e4e4'
-		bono_style.add('BACKGROUND', (0, i + 2), (-1, i + 2), vcolor)
-		bono_style.add('TEXTCOLOR', (0, i + 2), (-1, i + 2), colors.black)
-		bono_style.add('FONTNAME', (0, i + 2), (-1, i + 2), 'Arial')
+		bono_style.add('BACKGROUND', (0, i + 3), (-1, i + 3), vcolor)
+		bono_style.add('TEXTCOLOR', (0, i + 3), (-1, i + 3), colors.black)
+		bono_style.add('FONTNAME', (0, i + 3), (-1, i + 3), 'Arial')
 	#ramos
-	ramos.append(['CATÁLOGOS DE RAMOS', ' ', ' ', ' ',' ', ' ', ' ', ' '])
+	ramos.append(['CATÁLOGO DE RAMOS', ' ', ' ', ' ',' ', ' ', ' ', ' '])
 	ramos.append(['CÓDIGO', 'DESCRIPCIÓN', 'CÓDIGO', 'DESCRIPCIÓN','CÓDIGO', 'DESCRIPCIÓN', 'CÓDIGO', 'DESCRIPCIÓN'])
 	ramos.append(['101', 'INCENDIO', '105', 'TERREMOTO Y ERUPCIÓN VOLCÁNICA', '201', 'AUTOS RESIDENTES', '202', 'CAMIONES'])
 	ramos.append(['203', 'TURISTAS', '204', 'AUTOBUSES', '205', 'MOTOCICLETAS', '206', 'SUVA'])
@@ -508,3 +518,44 @@ def get_tablas_referencia():
 		ramo_style.add('TEXTCOLOR', (0, i+2), (-1, i+2), colors.black)
 		ramo_style.add('FONTNAME', (0, i+2), (-1, i+2), 'Arial')
 	return ramos,ramo_style,bonos,bono_style
+
+def getFactorExclusion(i,texto):
+	bases =["Por Agente","Por Promotor","Por Ramo", "Por oficina","Por Poliza","Por Grupo","Por Subgrupo","Por Tipo Persona","Por Reaseguro","Por Coaseguro","Por Multianual","Por Dividendos","Por No Computabilidad","Por Portafolio","Por Prestador","Por Negocio"]
+	return bases[i-20] + " ("+texto+")"
+
+def getTableStyle(tipo):
+	style_newx= TableStyle(
+		[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+	style_newx.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
+	style_newx.add('TEXTCOLOR', (0,0 ), (-1, 0), colors.white)
+	style_newx.add('BACKGROUND', (0, 0), (-1, 0), '#10b0c2')
+	style_newx.add('BACKGROUND', (0, 1), (-1, 1), '#e8eaea')
+	style_newx.add('TEXTCOLOR', (0, 1), (-1, 1), colors.black)
+	style_newx.add('FONTNAME', (0, 1), (-1, 1), 'Arial')
+	style_newx.add('BACKGROUND', (0, 2), (-1, 2), '#e2e4e4')
+	style_newx.add('TEXTCOLOR', (0, 2), (-1, 2), colors.black)
+	style_newx.add('FONTNAME', (0, 2), (-1, 2), 'Arial')
+	style_newx.add('BACKGROUND', (0, 3), (-1, 3), '#e8eaea')
+	style_newx.add('TEXTCOLOR', (0, 3), (-1, 3), colors.black)
+	style_newx.add('FONTNAME', (0, 3), (-1, 3), 'Arial')
+	style_newx2 = TableStyle(
+		[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+	style_newx2.add('SPAN', (0, 0), (6, 0))
+	style_newx2.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
+	style_newx2.add('TEXTCOLOR', (0, 0), (-1, 0), colors.black)
+	style_newx2.add('FONTNAME', (0, 1), (-1, 1), 'Arial_Bold')
+	style_newx2.add('TEXTCOLOR', (0, 1), (-1, 1), colors.white)
+	style_newx2.add('BACKGROUND', (0, 1), (-1, 1), '#10b0c2')
+	style_newx2.add('BACKGROUND', (0, 2), (-1, 2), '#e8eaea')
+	style_newx2.add('TEXTCOLOR', (0, 2), (-1, 2), colors.black)
+	style_newx2.add('FONTNAME', (0, 2), (-1, 2), 'Arial')
+	style_newx2.add('BACKGROUND', (0, 3), (-1, 3), '#e2e4e4')
+	style_newx2.add('TEXTCOLOR', (0, 3), (-1, 3), colors.black)
+	style_newx2.add('FONTNAME', (0, 3), (-1, 3), 'Arial')
+	style_newx2.add('BACKGROUND', (0, 4), (-1, 4), '#e8eaea')
+	style_newx2.add('TEXTCOLOR', (0, 4), (-1, 4), colors.black)
+	style_newx2.add('FONTNAME', (0, 4), (-1, 4), 'Arial')
+	if tipo==2:
+		return style_newx2
+	if tipo==1:
+		return style_newx

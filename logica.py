@@ -22,6 +22,7 @@ import os
 from dotenv import load_dotenv
 from apoyo import get_sura_address
 from apoyo import getTableNamesUDI
+from apoyo import getTableStyle
 from apoyo import getHeadColumnsUDI
 from apoyo import get_tablas_referencia
 from apoyo import getheaderforcompressed
@@ -33,6 +34,7 @@ from apoyo import getTableNamesComisiones
 from apoyo import getquery
 from apoyo import getheaderpdf
 from apoyo import getcolumnstosum_udi
+from apoyo import getFactorExclusion
 import asyncio
 import cx_Oracle_async
 
@@ -898,7 +900,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 																					  vertical="center")
 					if i > 19 and row[19] == 'SI':
 						if row[i] is not None and len(row[i]) > 0:
-							lista_razones.append(row[i])
+							lista_razones.append(getFactorExclusion(i,row[i]))
 			if row[19] == 'SI' and len(lista_razones) > 0:
 				ws.cell(row=14 + j, column=11).value = ", ".join(lista_razones)
 			if row[19] == 'NO':
@@ -917,8 +919,8 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			for linea in tabla:
 				c_columna=0
 				for columna in linea:
-					if c_linea in [0, 1]:
-						if c_linea == 0 and t_apoyo.index(tabla) == 1 and c_columna == 0:
+					if c_linea in [0, 1,2]:
+						if c_linea == 1 and t_apoyo.index(tabla) == 1 and c_columna == 0:
 							top_1 = ws.cell(row=j, column=1)
 							top_2 = ws.cell(row=j, column=3)
 							top_3 = ws.cell(row=j, column=5)
@@ -951,7 +953,7 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 											  color='ffffff')
 							top_4.alignment = Alignment(horizontal="center",
 														vertical="center")
-						if c_linea == 0 and t_apoyo.index(tabla) == 0 and c_columna == 0:
+						if c_linea == 0 and c_columna == 0:
 							top_1 = ws.cell(row=j, column=c_columna + 1)
 							ws.merge_cells(start_row=j, start_column=1, end_row=j, end_column=8)
 							top_1.value = columna
@@ -960,11 +962,15 @@ async def bonos_xlx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 											  color='ffffff')
 							top_1.alignment = Alignment(horizontal="center",
 																					   vertical="center")
-						if c_linea==1:
+						if (c_linea==2 and t_apoyo.index(tabla) == 1) or (c_linea==1 and t_apoyo.index(tabla) == 0):
 							ws.cell(row=j, column=c_columna + 1).value = columna
 							ws.cell(row=j, column=c_columna + 1).fill = greyFill
 							ws.cell(row=j, column=c_columna + 1).font = Font(name='Arial', size=9, bold=True,
 																			 color='ffffff')
+							ws.cell(row=j, column=c_columna + 1).alignment = Alignment(horizontal="center",
+																					   vertical="center")
+						if (c_linea==2 and t_apoyo.index(tabla) == 0):
+							ws.cell(row=j, column=c_columna + 1).value = columna
 							ws.cell(row=j, column=c_columna + 1).alignment = Alignment(horizontal="center",
 																					   vertical="center")
 					else:
@@ -1030,20 +1036,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		data_for_s_new_table = []
 		data_for_t_new_table = []
 		data_for_f_new_table = []
-		style_newx2 = TableStyle(
-			[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
-		style_newx2.add('SPAN', (0, 0), (7, 0))
-		style_newx2.add('FONTNAME', (0, 0), (-1, 0), 'Arial_Bold')
-		style_newx2.add('TEXTCOLOR', (0, 0), (-1, 0), colors.black)
-		style_newx2.add('FONTNAME', (0, 1), (-1, 1), 'Arial_Bold')
-		style_newx2.add('TEXTCOLOR', (0, 1), (-1, 1), colors.white)
-		style_newx2.add('BACKGROUND', (0, 1), (-1, 1), '#10b0c2')
-		style_newx2.add('BACKGROUND', (0, 2), (-1, 2), '#e8eaea')
-		style_newx2.add('TEXTCOLOR', (0, 2), (-1, 2), colors.black)
-		style_newx2.add('FONTNAME', (0, 2), (-1, 2), 'Arial')
-		style_newx2.add('BACKGROUND', (0, 3), (-1, 3), '#e2e4e4')
-		style_newx2.add('TEXTCOLOR', (0, 3), (-1, 3), colors.black)
-		style_newx2.add('FONTNAME', (0, 3), (-1, 3), 'Arial')
+
 		for cursor in cursors:
 			tblstyle = TableStyle(
 				[('LINEABOVE', (0, 0), (-1, -1), 0.25, colors.white), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
@@ -1051,7 +1044,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			lista = getHeadColumnsUDI("pdf", c_count)
 			data_cursor = []
 			theader = []
-			theader.append([getTableNamesUDI(c_count)])
+			theader.append([getTableNamesUDI(c_count,"pdf")])
 			taux = Table(theader, hAlign='LEFT')
 			taux.setStyle(grid)
 			data_cursor.append(lista)
@@ -1059,7 +1052,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			if c_count in [5,6]:
 				fila_totales = ["","","", "", "", "", "", "", "","","", "TOTAL", 0, 0,0, ' ', 0,0,'','','']
 			if c_count in [1, 2]:
-				fila_totales = ["TOTAL", 0, 0, 0, 0, 0, 0, 0]
+				fila_totales = ["TOTAL", 0, 0, 0, 0, 0, 0]
 			if c_count in [3, 4]:
 				fila_totales = ["TOTAL", 0]
 			if c_count in [7]:
@@ -1112,12 +1105,13 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								valor = ' '
 						if i == 2:
 							valor= getTipoSubBono(int(row[i]))
-						if i in [12,13, 14, 16,17]:
+						if i in [12,13, 14,15, 16,17]:
 							if valor < 0:
 								valor = "(" + "{:,.2f}".format(abs(valor)) + ")"
 							else:
 								valor = "{:,.2f}".format(valor)
-							fila_totales[i] += row[i]
+							if i != 15:
+								fila_totales[i] += row[i]
 						lista_aux.append(valor)
 				data_cursor.append(lista_aux)
 			if c_count in [1]:
@@ -1144,39 +1138,98 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			tbl = Table(data_cursor, hAlign='LEFT', repeatRows=1)
 			tbl.setStyle(tblstyle)
 
-			if c_count in [2]:
+			if c_count in [1]:
 				# necesito el header nuevo
 				lista_new_data = []
-				lista_new_data.append([getTableNamesUDI(2), ' ', ' ', ' ', ' ', ' ', ' ', ' '])
+				lista_new_data.append([getTableNamesUDI(1,"pdf"), ' ', ' ', ' ', ' ', ' ', ' '])
 				lista_new_data.append(getHeadColumnsUDI("pdf", c_count))
+
 				if len(data_for_s_new_table)>1:
 					lista_new_data.append(data_for_s_new_table[1])
 				else:
-					lista_new_data.append(['DAÑO','0','0','0','0','0','0','0'])
-				if len(data_for_t_new_table)>1:
-					lista_new_data.append(data_for_t_new_table[1])
+					lista_new_data.append(['DAÑO','0.00','0.00','0.00','0.00','0.00','0.00'])
+				if len(data_for_s_new_table)>2:
+					lista_new_data.append(data_for_s_new_table[2])
 				else:
-					lista_new_data.append(['VIDA','0','0','0','0','0','0','0'])
-
+					lista_new_data.append(['VIDA','0.00','0.00','0.00','0.00','0.00','0.00'])
+				suma=["TOTAL",0,0,0,0,0,0]
+				for j in range(6):
+					ba= ("(" in lista_new_data[2][j + 1])
+					bb=("(" in lista_new_data[3][j + 1])
+					a=float(lista_new_data[2][j + 1].replace(",", "").replace("(", "").replace(")", ""))
+					b=float(lista_new_data[3][j + 1].replace(",", "").replace("(", "").replace(")", ""))
+					if ba:
+						a=a*-1
+					if bb:
+						b = b * -1
+					suma[j+1] = a+b
+					if  suma[j+1] >=0:
+						suma[j+1]= "{:,.2f}".format(suma[j+1])
+					else:
+						suma[j + 1] = "("+"{:,.2f}".format(abs(suma[j + 1]))+")"
+				lista_new_data.append(suma)
 				tbl = Table(lista_new_data, hAlign='LEFT')
-				tbl.setStyle(style_newx2)
+				tbl.setStyle(getTableStyle(2))
 				data = [[tbl_header, tbl]]
-				shell_table = Table(data, hAlign='LEFT', colWidths=[400 * mm, 200 * mm],style=[('VALIGN', (0, 0), (-1, -1), 'MIDDLE')])
+				shell_table = Table(data, hAlign='LEFT', colWidths=[450 * mm, 200 * mm],style=[('VALIGN', (0, 0), (-1, -1), 'MIDDLE')])
 				flowables.append(shell_table)
 				flowables.append(Table([("", " ", ""), ("", "", "")]))
+			if c_count in [2]:
+				# necesito el header nuevo
+				lista_new_data = []
+				lista_new_data.append(data_for_t_new_table[0])
+
+				if len(data_for_t_new_table) > 1:
+					lista_new_data.append(data_for_t_new_table[1])
+				else:
+					lista_new_data.append(['DAÑO', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'])
+				if len(data_for_t_new_table) > 2:
+					lista_new_data.append(data_for_t_new_table[2])
+				else:
+					lista_new_data.append(['VIDA', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'])
+				suma = ["TOTAL", 0, 0, 0, 0, 0, 0]
+				for j in range(6):
+					ba = ("(" in lista_new_data[1][j + 1])
+					bb = ("(" in lista_new_data[2][j + 1])
+					a = float(lista_new_data[1][j + 1].replace(",", "").replace("(", "").replace(")", ""))
+					b = float(lista_new_data[2][j + 1].replace(",", "").replace("(", "").replace(")", ""))
+					if ba:
+						a = a * -1
+					if bb:
+						b = b * -1
+					suma[j + 1] = a + b
+					if suma[j + 1] >= 0:
+						suma[j + 1] = "{:,.2f}".format(suma[j + 1])
+					else:
+						suma[j + 1] = "(" + "{:,.2f}".format(abs(suma[j + 1])) + ")"
+				lista_new_data.append(suma)
+				tbl = Table(lista_new_data, hAlign='LEFT')
+				tbl.setStyle(getTableStyle(1))
+				flowables.append(Table([("", " ", ""), ("", "", "")]))
+				if c_count not in empty_cursors:
+					flowables.append(taux)
+					flowables.append(Table([("", " ", "")]))
+					flowables.append(tbl)
+					flowables.append(Table([("", " ", ""), ("", "", "")]))
 			if c_count in [4]:
 				# necesito el header nuevo
 				lista_new_data = []
 				list_header = getheaderforcompressed(data_for_f_new_table, data_for_s_new_table)
 				list_header[0]='Daño/Vida'
-				lista_new_data.append(list_header)
 				aux_list_1 = []
 				aux_list_1.append('DAÑO')
 				aux_list_2 = []
 				aux_list_2.append('VIDA')
+				lista_index=[0,0,0]
 				for i in range(len(list_header)):
 					if i > 0:
 						entro = False
+						if list_header[i] == "Saldo Anterior":
+							lista_index[0]=i
+						if list_header[i] == "Prestación de Servicios Neta":
+							lista_index[1]=i
+						if list_header[i] == "Pago de Prestación de Servicios":
+							lista_index[2]=i
 						for couple in data_for_f_new_table:
 							if couple[0] == list_header[i]:
 								if len(aux_list_1)==i:
@@ -1192,6 +1245,44 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 									aux_list_2.append(couple[1])
 						if not entro:
 							aux_list_2.append("0.00")
+				list_header.append("Saldo Final")
+				ba = ("(" in aux_list_1[lista_index[0]])
+				bb = ("(" in aux_list_1[lista_index[1]])
+				bc = ("(" in aux_list_1[lista_index[2]])
+				a = float(aux_list_1[lista_index[0]].replace(",", "").replace("(", "").replace(")", ""))
+				b = float(aux_list_1[lista_index[1]].replace(",", "").replace("(", "").replace(")", ""))
+				c = float(aux_list_1[lista_index[2]].replace(",", "").replace("(", "").replace(")", ""))
+				if ba:
+					a = a * -1
+				if bb:
+					b = b * -1
+				if bc:
+					c = c * -1
+				suma = a + b + c
+				if suma >= 0:
+					suma = "{:,.2f}".format(suma)
+				else:
+					suma = "(" + "{:,.2f}".format(abs(suma)) + ")"
+				aux_list_1.append(suma)
+				ba = ("(" in aux_list_2[lista_index[0]])
+				bb = ("(" in aux_list_2[lista_index[1]])
+				bc = ("(" in aux_list_2[lista_index[2]])
+				a = float(aux_list_2[lista_index[0]].replace(",", "").replace("(", "").replace(")", ""))
+				b = float(aux_list_2[lista_index[1]].replace(",", "").replace("(", "").replace(")", ""))
+				c = float(aux_list_2[lista_index[2]].replace(",", "").replace("(", "").replace(")", ""))
+				if ba:
+					a = a * -1
+				if bb:
+					b = b * -1
+				if bc:
+					c = c * -1
+				suma = a + b + c
+				if suma >= 0:
+					suma = "{:,.2f}".format(suma)
+				else:
+					suma = "(" + "{:,.2f}".format(abs(suma)) + ")"
+				aux_list_2.append(suma)
+				lista_new_data.append(list_header)
 				lista_new_data.append(aux_list_1)
 				lista_new_data.append(aux_list_2)
 				tbl = Table(lista_new_data, hAlign='LEFT')
@@ -1229,6 +1320,7 @@ async def udi_pdf(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		tbl.setStyle(bono_style)
 		flowables.append(tbl)
 		PageNumCanvas.setReporte(PageNumCanvas, 'BONOS')
+		app.logger.info("Generando PDF")
 		doc.build(flowables, canvasmaker=PageNumCanvas)
 		return True, "", virtual_wb.getvalue(), "application/pdf", libro_nombre
 	except Exception as ex:
@@ -1276,14 +1368,13 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 		# NUEVO BLOQUE SECUENCIAL
 		c_count = 1
 		for cursor in cursors:
-
 			app.logger.info(f"Leyendo cursor -> ({c_count})")
 			fila_totales = [0, 0, 0, 0,0]
 			lista = getHeadColumnsUDI("excel", c_count)
 			alphabet_string = string.ascii_uppercase
 			alphabet_list = list(alphabet_string)
 			if len(cursor) > 0:
-				ws.cell(row=f, column=1).value = getTableNamesUDI(c_count)
+				ws.cell(row=f, column=1).value = getTableNamesUDI(c_count,"excel")
 				ws.cell(row=f, column=1).font = Font(name='Arial', size=9, bold=True)
 				f += 1
 				j = 0
@@ -1312,19 +1403,45 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			if len(cursor) > 0:
 				f += 1
 			has_data= False
+			filas_conceptos=[0,0,0]
+			total_7=["TOTAL",0,0,0]
 			for row in cursor:
 				for i in range(0, len(row)):
 					if c_count not in [5,6]:
 						valor = row[i]
+						has_data = True
 						if c_count in [1, 2]:
 							if i != 0:
 								valor = "{:,.2f}".format(valor)
-						if c_count in [3, 4, 7]:
+						if c_count in [3, 4]:
 							if i != 0:
 								valor = "{:,.2f}".format(valor)
-						ws.cell(row=f, column=i + 1).value = valor
-						ws.cell(row=f, column=i + 1).border= Border(left=Side(style='thin'), right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
-						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
+						if c_count in [7]:
+							if i != 0:
+								valor = "{:,.2f}".format(valor)
+								total_7[i] += row[i]
+						if c_count in [3,4]:
+							if valor == "Saldo Anterior":
+								filas_conceptos[0]=f
+							if valor == "Prestación de Servicios Neta":
+								filas_conceptos[1]=f
+							if valor == "Pago de Prestación de Servicios":
+								filas_conceptos[2]=f
+							if row[0] != ws.cell(row=f-1, column=1).value:
+								ws.cell(row=f, column=i + 1).value = valor
+								ws.cell(row=f, column=i + 1).border = Border(left=Side(style='thin'),
+																			 right=Side(style='thin'),
+																			 top=Side(style='thin'),
+																			 bottom=Side(style='thin'))
+								ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center",
+																				   vertical="center")
+							else:
+								if i==1:
+									f -= 1
+						else:
+							ws.cell(row=f, column=i + 1).value = valor
+							ws.cell(row=f, column=i + 1).border= Border(left=Side(style='thin'), right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
+							ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
 					else:
 						valor = row[i]
 						if i==2:
@@ -1335,7 +1452,7 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 								valor = auxnewdate
 							else:
 								valor = ' '
-						if i in getcolumnstosum_udi(c_count):
+						if i in getcolumnstosum_udi(c_count)  or i==15:
 							#valor = "{:,.2f}".format(valor)
 							ws.cell(row=f, column=i + 1).number_format = '#,##0.00'
 						if i == 12:
@@ -1353,8 +1470,56 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 						ws.cell(row=f, column=i + 1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
 																	 top=Side(style='thin'), bottom=Side(style='thin'))
 						ws.cell(row=f, column=i + 1).alignment = Alignment(horizontal="center", vertical="center")
+				if c_count in [1, 2] and len(cursor) == 1:
+					f += 1
+					ws.cell(row=f, column=1).value = "VIDA"
+					ws.cell(row=f, column=1).border = Border(left=Side(style='thin'),
+																 right=Side(style='thin'),
+																 top=Side(style='thin'),
+																 bottom=Side(style='thin'))
+					ws.cell(row=f, column=1).alignment = Alignment(horizontal="center", vertical="center")
+					for d in range(6):
+						ws.cell(row=f, column=d+2).value = 0
+						ws.cell(row=f, column=d+2).number_format = '#,##0.00'
+						ws.cell(row=f, column=d+2).border = Border(left=Side(style='thin'),
+															 right=Side(style='thin'),
+															 top=Side(style='thin'),
+															 bottom=Side(style='thin'))
+						ws.cell(row=f, column=d+2).alignment = Alignment(horizontal="center", vertical="center")
 				f += 1
 			#cursor.close()
+			if c_count in [3,4] and has_data:
+				ws.cell(row=f, column=1).value = "Saldo Final"
+				ws.cell(row=f, column=1).border = Border(left=Side(style='thin'),
+														 right=Side(style='thin'),
+														 top=Side(style='thin'),
+														 bottom=Side(style='thin'))
+				ws.cell(row=f, column=1).alignment = Alignment(horizontal="center", vertical="center")
+
+				ws.cell(row=f, column=2).value = float(str(ws.cell(row=filas_conceptos[0], column=2).value).replace(",","")) + float(str(ws.cell(row=filas_conceptos[1], column=2).value).replace(",","")) + float(str(ws.cell(row=filas_conceptos[2], column=2).value).replace(",",""))
+				ws.cell(row=f, column=2).number_format = '#,##0.00'
+				ws.cell(row=f, column=2).border = Border(left=Side(style='thin'),
+																 right=Side(style='thin'),
+																 top=Side(style='thin'),
+																 bottom=Side(style='thin'))
+				ws.cell(row=f, column=2).alignment = Alignment(horizontal="center", vertical="center")
+				f += 1
+			if c_count in [1,2] and has_data:
+				ws.cell(row=f, column=1).value = "TOTAL"
+				ws.cell(row=f, column=1).border = Border(left=Side(style='thin'),
+														 right=Side(style='thin'),
+														 top=Side(style='thin'),
+														 bottom=Side(style='thin'))
+				ws.cell(row=f, column=1).alignment = Alignment(horizontal="center", vertical="center")
+				for d in range(6):
+					ws.cell(row=f, column=d + 2).value = float(str(ws.cell(row=f-2, column=d + 2).value).replace(",","")) + float(str(ws.cell(row=f-1, column=d + 2).value).replace(",",""))
+					ws.cell(row=f, column=d + 2).number_format = '#,##0.00'
+					ws.cell(row=f, column=d + 2).border = Border(left=Side(style='thin'),
+																 right=Side(style='thin'),
+																 top=Side(style='thin'),
+																 bottom=Side(style='thin'))
+					ws.cell(row=f, column=d + 2).alignment = Alignment(horizontal="center", vertical="center")
+				f += 1
 			if c_count in [5,6] and has_data:
 				fila_totales[0] = "{:,.2f}".format(fila_totales[0])
 				fila_totales[1] = "{:,.2f}".format(fila_totales[1])
@@ -1386,6 +1551,30 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 				ws.cell(row=f, column=18).border = Border(left=Side(style='thin'), right=Side(style='thin'),
 														  top=Side(style='thin'), bottom=Side(style='thin'))
 				f += 1
+			if c_count in [7] and has_data:
+				total_7[1] = "{:,.2f}".format(total_7[1])
+				total_7[2] = "{:,.2f}".format(total_7[2])
+				total_7[3] = "{:,.2f}".format(total_7[3])
+				ws.cell(row=f, column=1).value = "TOTAL"
+				ws.cell(row=f, column=1).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=1).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=2).value = total_7[1]
+				ws.cell(row=f, column=2).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=2).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=3).value = total_7[2]
+				ws.cell(row=f, column=3).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=3).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=4).value = total_7[3]
+				ws.cell(row=f, column=4).alignment = Alignment(horizontal="center", vertical="center")
+				ws.cell(row=f, column=4).border = Border(left=Side(style='thin'), right=Side(style='thin'),
+														  top=Side(style='thin'), bottom=Side(style='thin'))
+				ws.cell(row=f, column=2).number_format = '#,##0.00'
+				ws.cell(row=f, column=3).number_format = '#,##0.00'
+				ws.cell(row=f, column=4).number_format = '#,##0.00'
+				f += 1
 			if len(cursor) > 0:
 				f += 1
 			c_count += 1
@@ -1398,21 +1587,60 @@ async def udi_xlsx(P_Clave,P_Feini,P_Fefin,P_COD,app):
 			for linea in tabla:
 				c_columna = 0
 				for columna in linea:
-					if c_linea in [0, 1]:
-						if c_linea==0 and c_columna==0:
+					if c_linea in [0, 1, 2]:
+						if c_linea == 1 and t_apoyo.index(tabla) == 1 and c_columna == 0:
 							top_1 = ws.cell(row=f, column=1)
+							top_2 = ws.cell(row=f, column=3)
+							top_3 = ws.cell(row=f, column=5)
+							top_4 = ws.cell(row=f, column=7)
+							ws.merge_cells(start_row=f, start_column=1, end_row=f, end_column=2)
+							ws.merge_cells(start_row=f, start_column=3, end_row=f, end_column=4)
+							ws.merge_cells(start_row=f, start_column=5, end_row=f, end_column=6)
+							ws.merge_cells(start_row=f, start_column=7, end_row=f, end_column=8)
+							top_1.value = linea[0]
+							top_1.fill = greyFill
+							top_1.font = Font(name='Arial', size=9, bold=True,
+											  color='ffffff')
+							top_1.alignment = Alignment(horizontal="center",
+														vertical="center")
+							top_2.value = linea[2]
+							top_2.fill = greyFill
+							top_2.font = Font(name='Arial', size=9, bold=True,
+											  color='ffffff')
+							top_2.alignment = Alignment(horizontal="center",
+														vertical="center")
+							top_3.value = linea[4]
+							top_3.fill = greyFill
+							top_3.font = Font(name='Arial', size=9, bold=True,
+											  color='ffffff')
+							top_3.alignment = Alignment(horizontal="center",
+														vertical="center")
+							top_4.value = linea[6]
+							top_4.fill = greyFill
+							top_4.font = Font(name='Arial', size=9, bold=True,
+											  color='ffffff')
+							top_4.alignment = Alignment(horizontal="center",
+														vertical="center")
+						if c_linea == 0 and c_columna == 0:
+							top_1 = ws.cell(row=f, column=c_columna + 1)
 							ws.merge_cells(start_row=f, start_column=1, end_row=f, end_column=8)
 							top_1.value = columna
 							top_1.fill = greyFill
 							top_1.font = Font(name='Arial', size=9, bold=True,
-																			 color='ffffff')
-							top_1.alignment = Alignment(horizontal="center", vertical="center")
-						if c_linea==1:
+											  color='ffffff')
+							top_1.alignment = Alignment(horizontal="center",
+														vertical="center")
+						if (c_linea == 2 and t_apoyo.index(tabla) == 1) or (c_linea == 1 and t_apoyo.index(tabla) == 0):
 							ws.cell(row=f, column=c_columna + 1).value = columna
 							ws.cell(row=f, column=c_columna + 1).fill = greyFill
 							ws.cell(row=f, column=c_columna + 1).font = Font(name='Arial', size=9, bold=True,
 																			 color='ffffff')
-							ws.cell(row=f, column=c_columna + 1).alignment = Alignment(horizontal="center", vertical="center")
+							ws.cell(row=f, column=c_columna + 1).alignment = Alignment(horizontal="center",
+																					   vertical="center")
+						if (c_linea == 2 and t_apoyo.index(tabla) == 0):
+							ws.cell(row=f, column=c_columna + 1).value = columna
+							ws.cell(row=f, column=c_columna + 1).alignment = Alignment(horizontal="center",
+																					   vertical="center")
 					else:
 						ws.cell(row=f, column=c_columna + 1).value = columna
 						ws.cell(row=f, column=c_columna + 1).alignment = Alignment(horizontal="center",
