@@ -1,5 +1,4 @@
 import datetime
-from types import NoneType
 
 import openpyxl as opyxl
 from cx_Oracle import Date
