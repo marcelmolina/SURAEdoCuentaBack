@@ -107,7 +107,8 @@ def getperiodo(P_CLAVE,P_MES,P_ANIO,app):
 		cur1 = connection.cursor()
 		cur1.execute(query1)
 		for data in cur1:
-			if isinstance(data,Date):
+			valor=data[0]
+			if isinstance(valor,datetime.datetime):
 				entro = True
 				P_Fefin = data[0].strftime('%Y-%m-%d')
 		if entro:
